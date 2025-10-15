@@ -11,6 +11,7 @@ Races/[Bb]uild/
 Races/[Bb]uilds/
 Races/[Ll]ogs/
 Races/[Uu]ser[Ss]ettings/
+Races/.vscode/
 *.log
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
