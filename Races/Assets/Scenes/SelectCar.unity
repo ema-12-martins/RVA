@@ -816,7 +816,7 @@ GameObject:
   - component: {fileID: 1169600711}
   - component: {fileID: 1169600710}
   - component: {fileID: 1169600709}
-  - component: {fileID: 1169600708}
+  - component: {fileID: 1169600712}
   m_Layer: 0
   m_Name: ImageTargetRedCar
   m_TagString: Untagged
@@ -840,25 +840,6 @@ Transform:
   - {fileID: 887640000}
   m_Father: {fileID: 524331868}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1169600708
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1169600706}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1778676317, guid: 8a9a760f95896c34689febc965510927, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mObserverBehaviour: {fileID: 1169600711}
-  mHiddenRoot: {fileID: 0}
-  mTargetName: red_car
-  mDatasetName: Vuforia/Races.xml
-  mCastedBehaviour: {fileID: 1169600711}
-  mMeshFilter: {fileID: 0}
-  mMeshRenderer: {fileID: 0}
 --- !u!114 &1169600709
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -945,7 +926,26 @@ MonoBehaviour:
   mMotionHint: 1
   mTrackingOptimization: 0
   mTrackingOptimizationNeedsUpgrade: 0
-  mPreview: {fileID: 1169600708}
+  mPreview: {fileID: 1169600712}
+--- !u!114 &1169600712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1169600706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1778676317, guid: 8a9a760f95896c34689febc965510927, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mObserverBehaviour: {fileID: 1169600711}
+  mHiddenRoot: {fileID: 0}
+  mTargetName: red_car
+  mDatasetName: Vuforia/Races.xml
+  mCastedBehaviour: {fileID: 1169600711}
+  mMeshFilter: {fileID: 0}
+  mMeshRenderer: {fileID: 0}
 --- !u!1 &1217862675
 GameObject:
   m_ObjectHideFlags: 0
@@ -1426,15 +1426,15 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1706570980}
-        m_TargetAssemblyTypeName: QuitGame, Assembly-CSharp
-        m_MethodName: QuitGameFunction
-        m_Mode: 1
+        m_TargetAssemblyTypeName: Quit, Assembly-CSharp
+        m_MethodName: ChangeScene
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: Race
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1641824598
@@ -1669,7 +1669,7 @@ GameObject:
   - component: {fileID: 1945253321}
   - component: {fileID: 1945253322}
   m_Layer: 0
-  m_Name: ImageTargetGreenCar
+  m_Name: ImageTargetWhiteCar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1776,8 +1776,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buttonConfirm: {fileID: 1641824595}
   TextConfirm: {fileID: 1109633826}
-  displayText: Are you sure that you want the green car?
-  color: green
+  displayText: Are you sure that you want the white car?
+  color: white
 --- !u!114 &1945253322
 MonoBehaviour:
   m_ObjectHideFlags: 0
