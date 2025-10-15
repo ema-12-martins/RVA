@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class RacerAnimator : MonoBehaviour
 {
+    //To receive the color of the car
+    public string color;
+
     [Header("Track Reference")]
     public TrackGenerator track;
     
@@ -16,7 +19,15 @@ public class RacerAnimator : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("Starting position on track (0 to 1)")]
     public float startPosition = 0f;
-    
+
+    [Header("Jump Settings")]
+    public float jumpHeight = 1f;
+    public float jumpDuration = 0.5f;
+    private bool isJumping = false;
+    private float jumpTimer = 0f;
+    private float jumpOffset = 0f;
+
+
     [Header("Visuals")]
     public Color racerColor = Color.green;
     
@@ -53,8 +64,30 @@ public class RacerAnimator : MonoBehaviour
         
         // Get position on the track
         Vector3 targetPos = track.GetLanePosition(currentPosition, leftLane);
-        transform.position = targetPos + Vector3.up * 0.3f; // Slight elevation
-        
+
+
+        // Update jump
+        if (isJumping)
+        {
+            jumpTimer += Time.deltaTime;
+            float t = jumpTimer / jumpDuration;
+            jumpOffset = 4 * jumpHeight * t * (1 - t);
+
+            if (jumpTimer >= jumpDuration)
+            {
+                isJumping = false;
+                jumpOffset = 0f;
+            }
+        }
+        else
+        {
+            jumpOffset = 0.3f; 
+        }
+
+        // Aplicar posição final
+        transform.position = targetPos + Vector3.up * jumpOffset;
+
+
         // Calculate rotation to face forward
         float lookAheadT = currentPosition + 0.01f;
         Vector3 lookAheadPos = track.GetLanePosition(lookAheadT, leftLane);
@@ -64,8 +97,21 @@ public class RacerAnimator : MonoBehaviour
         {
             transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
         }
+
+        //Detect input of the mouse or click on the screen
+        if (!isJumping)
+        {
+            bool touch = Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began;
+            bool click = Input.GetMouseButtonDown(0);
+            if ((touch || click) && GameData.carColor == color)
+            {
+                isJumping = true;
+                jumpTimer = 0f;
+            }
+        }
+
     }
-    
+
     // Reset racer to start position
     public void ResetPosition()
     {
