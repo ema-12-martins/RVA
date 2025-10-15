@@ -1,6 +1,6 @@
 {
     "dependencies": {
-    "com.ptc.vuforia.engine": "file:com.ptc.vuforia.engine-11.4.4.tgz",
+    "com.ptc.vuforia.engine": "file:Packages/External/com.ptc.vuforia.engine-11.4.4.tgz",
     "com.unity.ai.navigation": "2.0.6",
     "com.unity.collab-proxy": "2.9.3",
     "com.unity.ide.rider": "3.0.31",
