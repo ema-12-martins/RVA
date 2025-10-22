@@ -84,7 +84,7 @@ public class RacerAnimator : MonoBehaviour
             jumpOffset = 0.3f; 
         }
 
-        // Aplicar posição final
+        // Aplicar posiï¿½ï¿½o final
         transform.position = targetPos + Vector3.up * jumpOffset;
 
 

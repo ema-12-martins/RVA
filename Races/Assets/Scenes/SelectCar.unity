@@ -694,7 +694,6 @@ GameObject:
   - component: {fileID: 1169600707}
   - component: {fileID: 1169600711}
   - component: {fileID: 1169600710}
-  - component: {fileID: 1169600709}
   - component: {fileID: 1169600712}
   m_Layer: 0
   m_Name: ImageTargetRedCar
@@ -719,22 +718,6 @@ Transform:
   - {fileID: 873817877}
   m_Father: {fileID: 524331868}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1169600709
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1169600706}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6dd0203c2cdb46947b05f077e5c92cb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  buttonConfirm: {fileID: 1641824595}
-  TextConfirm: {fileID: 1109633826}
-  displayText: Are you sure that you want the red car?
-  color: red
 --- !u!114 &1169600710
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1337,7 +1320,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 816c942efe24c0a48bfb2679a2df4556, type: 3}
       propertyPath: m_Name
-      value: FINAL_MODEL
+      value: White Sports Car
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1568,7 +1551,6 @@ GameObject:
   - component: {fileID: 1945253316}
   - component: {fileID: 1945253319}
   - component: {fileID: 1945253318}
-  - component: {fileID: 1945253321}
   - component: {fileID: 1945253322}
   m_Layer: 0
   m_Name: ImageTargetWhiteCar
@@ -1664,22 +1646,6 @@ MonoBehaviour:
   mTrackingOptimization: 0
   mTrackingOptimizationNeedsUpgrade: 0
   mPreview: {fileID: 1945253322}
---- !u!114 &1945253321
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1945253315}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6dd0203c2cdb46947b05f077e5c92cb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  buttonConfirm: {fileID: 1641824595}
-  TextConfirm: {fileID: 1109633826}
-  displayText: Are you sure that you want the white car?
-  color: white
 --- !u!114 &1945253322
 MonoBehaviour:
   m_ObjectHideFlags: 0

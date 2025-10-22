@@ -2,5 +2,5 @@ using UnityEngine;
 
 public static class GameData
 {
-    public static string carColor = "";
+    public static GameObject selectedCarPrefab = null;
 }
