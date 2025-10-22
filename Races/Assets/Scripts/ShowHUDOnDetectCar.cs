@@ -81,18 +81,7 @@ public class ShowHUDOnDetectCar : MonoBehaviour
             GameData.selectedCarPrefab = carPrefab;
             Debug.Log($"Car selected: {carPrefab.name}");
 
-            // Find the Quit script instance in the scene to change scene
-            // It's better if the Quit/SceneLoader script is more accessible (e.g., a Singleton)
-            // But for now, finding it works if there's only one.
-            Quit sceneLoader = FindAnyObjectByType<Quit>();
-            if (sceneLoader != null)
-            {
-                sceneLoader.ChangeScene("Race"); // Load the Race scene
-            }
-            else
-            {
-                Debug.LogError("Could not find Quit script instance to change scene!");
-            }
+            SceneLoader.Instance.ChangeScene("Race");
         }
         else
         {

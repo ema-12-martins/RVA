@@ -134,16 +134,12 @@ public class GameManager : MonoBehaviour
      // --- Public functions to be called by UI Buttons ---
     public void GoToMainMenu()
     {
-        SceneManager.LoadScene("StartMenu"); // Load the main menu scene
+        SceneLoader.Instance.LoadMainMenu();
     }
 
      public void QuitGame()
     {
-         Debug.Log("Quitting game...");
-         Application.Quit();
-        #if UNITY_EDITOR
-         UnityEditor.EditorApplication.isPlaying = false; // Stop playing in editor
-        #endif
+        SceneLoader.Instance.QuitGameFunction();
     }
 
      // Clean up event subscriptions

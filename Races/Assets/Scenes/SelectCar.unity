@@ -604,7 +604,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Are you sure that you want the XXXXX car?
+  m_text: '
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -695,6 +697,7 @@ GameObject:
   - component: {fileID: 1169600711}
   - component: {fileID: 1169600710}
   - component: {fileID: 1169600712}
+  - component: {fileID: 1169600713}
   m_Layer: 0
   m_Name: ImageTargetRedCar
   m_TagString: Untagged
@@ -808,6 +811,21 @@ MonoBehaviour:
   mCastedBehaviour: {fileID: 1169600711}
   mMeshFilter: {fileID: 0}
   mMeshRenderer: {fileID: 0}
+--- !u!114 &1169600713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1169600706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dd0203c2cdb46947b05f077e5c92cb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonConfirm: {fileID: 1109633826}
+  textConfirm: {fileID: 1641824595}
+  carPrefab: {fileID: 1758981113}
 --- !u!1 &1217862675
 GameObject:
   m_ObjectHideFlags: 0
@@ -1160,16 +1178,16 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1706570980}
-        m_TargetAssemblyTypeName: Quit, Assembly-CSharp
-        m_MethodName: ChangeScene
-        m_Mode: 5
+      - m_Target: {fileID: 1169600713}
+        m_TargetAssemblyTypeName: ShowHUDOnDetectCar, Assembly-CSharp
+        m_MethodName: ConfirmSelection
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Race
+          m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1641824598
@@ -1221,7 +1239,7 @@ GameObject:
   - component: {fileID: 1706570981}
   - component: {fileID: 1706570980}
   m_Layer: 0
-  m_Name: QuitGame
+  m_Name: SceneLoaderManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1327,6 +1345,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 816c942efe24c0a48bfb2679a2df4556, type: 3}
+--- !u!1 &1755594019 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 816c942efe24c0a48bfb2679a2df4556, type: 3}
+  m_PrefabInstance: {fileID: 1755594018}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1758981112
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1404,6 +1427,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d9c9e9d802abbff4e9e1f6d4606cd879, type: 3}
+--- !u!1 &1758981113 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d9c9e9d802abbff4e9e1f6d4606cd879, type: 3}
+  m_PrefabInstance: {fileID: 1758981112}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1873959540
 GameObject:
   m_ObjectHideFlags: 0
@@ -1552,6 +1580,7 @@ GameObject:
   - component: {fileID: 1945253319}
   - component: {fileID: 1945253318}
   - component: {fileID: 1945253322}
+  - component: {fileID: 1945253323}
   m_Layer: 0
   m_Name: ImageTargetWhiteCar
   m_TagString: Untagged
@@ -1665,14 +1694,29 @@ MonoBehaviour:
   mCastedBehaviour: {fileID: 1945253319}
   mMeshFilter: {fileID: 0}
   mMeshRenderer: {fileID: 0}
+--- !u!114 &1945253323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1945253315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dd0203c2cdb46947b05f077e5c92cb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonConfirm: {fileID: 1641824595}
+  textConfirm: {fileID: 1109633826}
+  carPrefab: {fileID: 1755594019}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1706570981}
   - {fileID: 410087041}
   - {fileID: 832575519}
+  - {fileID: 339134165}
   - {fileID: 1461317258}
   - {fileID: 524331868}
   - {fileID: 1217862679}
-  - {fileID: 339134165}
-  - {fileID: 1706570981}
