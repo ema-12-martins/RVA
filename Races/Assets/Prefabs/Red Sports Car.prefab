@@ -9,7 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8316070520869222311}
-  - component: {fileID: 4478008291682210686}
+  - component: {fileID: 2434201770365732669}
+  - component: {fileID: 4040410201467112321}
   m_Layer: 0
   m_Name: Red Sports Car
   m_TagString: Untagged
@@ -33,7 +34,25 @@ Transform:
   - {fileID: 6450064773584974159}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4478008291682210686
+--- !u!114 &2434201770365732669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7136749055234346399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00c8e7bd123139d4e88ef7529bc756d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  checkpoints:
+  - 0.25
+  - 0.5
+  - 0.75
+  - 0.95
+  checkpointTolerance: 0.05
+--- !u!114 &4040410201467112321
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -52,7 +71,6 @@ MonoBehaviour:
   isPlayerControlled: 0
   jumpHeight: 1
   jumpDuration: 0.5
-  racerColor: {r: 1, g: 0.2219167, b: 0, a: 1}
 --- !u!1001 &6776090882639107748
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -63,15 +81,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: d9c9e9d802abbff4e9e1f6d4606cd879, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.25
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d9c9e9d802abbff4e9e1f6d4606cd879, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.25
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d9c9e9d802abbff4e9e1f6d4606cd879, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.25
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d9c9e9d802abbff4e9e1f6d4606cd879, type: 3}
       propertyPath: m_LocalPosition.x

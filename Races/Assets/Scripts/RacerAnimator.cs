@@ -1,10 +1,11 @@
 using UnityEngine;
 using System;
 
+[RequireComponent(typeof(LapCounter))] // Ensure LapCounter is always present
 public class RacerAnimator : MonoBehaviour
 {
     [Header("Track Reference")]
-    public TrackGenerator track; // This will be assigned by GameManager in Race scene
+    public TrackGenerator track;
 
     [Header("Racer Settings")]
     [Tooltip("Which lane: true = left, false = right")]
@@ -23,61 +24,67 @@ public class RacerAnimator : MonoBehaviour
     public float jumpDuration = 0.5f;
     private bool isJumping = false;
     private float jumpTimer = 0f;
-    private float jumpOffset = 0.3f; // Start with base offset
-
-    [Header("Visuals")]
-    public Color racerColor = Color.green;
+    private float jumpOffset = 0.3f;
 
     private float currentPosition;
-    private float previousPosition;
-    private bool isInitialized = false; // Flag to check if setup is done
+    private bool isInitialized = false;
+    private LapCounter lapCounter;
 
+    // This event is now triggered by LapCounter
     public event Action OnLapCompleted;
+
+    void Awake()
+    {
+        // Get or add LapCounter component
+        lapCounter = GetComponent<LapCounter>();
+        if (lapCounter == null)
+        {
+            lapCounter = gameObject.AddComponent<LapCounter>();
+        }
+        
+        // Subscribe to lap counter's event
+        lapCounter.OnLapCompleted += HandleLapCompleted;
+    }
 
     void Start()
     {
-        Debug.Log("Hallo");
-        // Defer track-dependent initialization until track is assigned
         InitializeRacer();
     }
 
-     // Call this after the track has been assigned by GameManager
     public void InitializeRacer()
     {
-        // Only initialize if track is assigned AND not already initialized
         if (track != null && !isInitialized)
         {
             currentPosition = startPosition;
-            previousPosition = startPosition;
-            ApplyPositionAndRotation(); // Set initial position based on track
-            isInitialized = true; // Mark as initialized
-            Debug.Log($"{this.name} initialized on track.");
+            ApplyPositionAndRotation();
+            isInitialized = true;
+            
+            // Reset lap counter when initializing
+            if (lapCounter != null)
+            {
+                lapCounter.ResetLaps();
+            }
+            
+            Debug.Log($"{this.name} initialized on track at position {startPosition:F3}");
         }
-         // If called without a track assigned yet (e.g., from Start), do nothing here.
     }
 
     void Update()
     {
-        // --- Crucial Check: Don't run update logic if not initialized ---
         if (!isInitialized || track == null)
         {
-             // Try to initialize if track might have been assigned late
-             if (!isInitialized) InitializeRacer();
-             // If still not initialized, exit Update
-             if (!isInitialized) return;
+            if (!isInitialized) InitializeRacer();
+            if (!isInitialized) return;
         }
-        // --- End Check ---
 
-
-        previousPosition = currentPosition;
         currentPosition += speed * Time.deltaTime * 0.1f;
-
-        if (previousPosition > 0.9f && currentPosition < 0.1f)
-        {
-            OnLapCompleted?.Invoke();
-        }
-
         currentPosition = Mathf.Repeat(currentPosition, 1f);
+
+        // Update lap counter with current position
+        if (lapCounter != null)
+        {
+            lapCounter.UpdatePosition(currentPosition);
+        }
 
         ApplyPositionAndRotation();
         HandleJumping();
@@ -85,8 +92,7 @@ public class RacerAnimator : MonoBehaviour
 
     void ApplyPositionAndRotation()
     {
-         // Add safety check here too, although the Update check should prevent it
-         if (track == null) return;
+        if (track == null) return;
 
         Vector3 targetPos = track.GetLanePosition(currentPosition, leftLane);
         float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
@@ -133,23 +139,49 @@ public class RacerAnimator : MonoBehaviour
         }
     }
 
-    // Reset position remains the same
+    void HandleLapCompleted()
+    {
+        // Forward the lap counter's event to subscribers
+        OnLapCompleted?.Invoke();
+    }
+
     public void ResetPosition()
     {
         currentPosition = startPosition;
-        previousPosition = startPosition;
         isJumping = false;
         jumpTimer = 0f;
-        isInitialized = false; // Allow re-initialization
-        InitializeRacer(); // Try to apply position immediately if track exists
+        isInitialized = false;
+        
+        if (lapCounter != null)
+        {
+            lapCounter.ResetLaps();
+        }
+        
+        InitializeRacer();
     }
 
-     // Set position remains the same
     public void SetPosition(float t)
     {
         currentPosition = Mathf.Clamp01(t);
-        previousPosition = currentPosition;
-        isInitialized = false; // Allow re-initialization
-        InitializeRacer(); // Try to apply position immediately if track exists
+        isInitialized = false;
+        InitializeRacer();
+    }
+
+    public float GetCurrentPosition()
+    {
+        return currentPosition;
+    }
+
+    public int GetLapCount()
+    {
+        return lapCounter != null ? lapCounter.GetTotalLaps() : 0;
+    }
+
+    void OnDestroy()
+    {
+        if (lapCounter != null)
+        {
+            lapCounter.OnLapCompleted -= HandleLapCompleted;
+        }
     }
 }

@@ -30,10 +30,6 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // --- ADD THIS LOG AT THE VERY TOP ---
-        Debug.Log($"GameManager Start(). GameData prefab is: {(GameData.selectedCarPrefab == null ? "NULL" : GameData.selectedCarPrefab.name)}");
-        // --- END ADD ---
-        
         // Ensure UI is hidden at start
         if (endGamePanel != null) endGamePanel.SetActive(false);
 
