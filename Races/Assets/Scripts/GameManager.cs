@@ -30,6 +30,10 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        // --- ADD THIS LOG AT THE VERY TOP ---
+        Debug.Log($"GameManager Start(). GameData prefab is: {(GameData.selectedCarPrefab == null ? "NULL" : GameData.selectedCarPrefab.name)}");
+        // --- END ADD ---
+        
         // Ensure UI is hidden at start
         if (endGamePanel != null) endGamePanel.SetActive(false);
 
@@ -46,34 +50,35 @@ public class GameManager : MonoBehaviour
     {
         if (GameData.selectedCarPrefab != null)
         {
-            // Instantiate Player Car (e.g., in the left lane)
-            GameObject playerCar = Instantiate(GameData.selectedCarPrefab, track.GetLanePosition(0f, true) + Vector3.up * 0.3f, Quaternion.identity);
+            // Instantiate Player Car (e.g., in the left lane AT the origin, GameManager handles positioning logic now via InitializeRacer)
+            GameObject playerCar = Instantiate(GameData.selectedCarPrefab, Vector3.zero, Quaternion.identity); // Instantiate at world origin first
             playerRacer = playerCar.GetComponent<RacerAnimator>();
             if (playerRacer != null)
             {
-                playerRacer.track = track;
-                playerRacer.leftLane = true; // Player in left lane
-                playerRacer.isPlayerControlled = true; // Add this flag to RacerAnimator
-                playerRacer.OnLapCompleted += HandlePlayerLap; // Subscribe to lap event
-                playerRacer.name = "PlayerCar"; // Rename for clarity
+                playerRacer.track = track; // Assign track
+                playerRacer.leftLane = true;
+                playerRacer.isPlayerControlled = true;
+                playerRacer.OnLapCompleted += HandlePlayerLap;
+                playerRacer.name = "PlayerCar";
+                playerRacer.InitializeRacer(); // <<< ADD THIS CALL
             }
              else { Debug.LogError("Selected Car Prefab does not have a RacerAnimator component!"); }
         }
 
         if (opponentCarPrefab != null)
         {
-             // Instantiate Opponent Car (e.g., in the right lane)
-            GameObject opponentCar = Instantiate(opponentCarPrefab, track.GetLanePosition(0f, false) + Vector3.up * 0.3f, Quaternion.identity);
+             // Instantiate Opponent Car (e.g., in the right lane AT the origin)
+            GameObject opponentCar = Instantiate(opponentCarPrefab, Vector3.zero, Quaternion.identity); // Instantiate at world origin first
             opponentRacer = opponentCar.GetComponent<RacerAnimator>();
             if (opponentRacer != null)
             {
-                opponentRacer.track = track;
-                opponentRacer.leftLane = false; // Opponent in right lane
-                opponentRacer.isPlayerControlled = false; // Opponent is AI/Simple Mover
-                opponentRacer.OnLapCompleted += HandleOpponentLap; // Subscribe to lap event
-                 opponentRacer.name = "OpponentCar"; // Rename for clarity
-                // Optional: Adjust opponent speed slightly
+                opponentRacer.track = track; // Assign track
+                opponentRacer.leftLane = false;
+                opponentRacer.isPlayerControlled = false;
+                opponentRacer.OnLapCompleted += HandleOpponentLap;
+                 opponentRacer.name = "OpponentCar";
                  opponentRacer.speed = 0.95f;
+                 opponentRacer.InitializeRacer(); // <<< ADD THIS CALL
             }
              else { Debug.LogError("Opponent Car Prefab does not have a RacerAnimator component!"); }
         }

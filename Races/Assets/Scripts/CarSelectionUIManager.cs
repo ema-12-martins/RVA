@@ -63,6 +63,9 @@ public class CarSelectionUIManager : MonoBehaviour
         if (carPrefabToConfirm != null)
         {
             GameData.selectedCarPrefab = carPrefabToConfirm;
+            // --- ADD THIS LOG ---
+            Debug.Log($"Car confirmed: {carPrefabToConfirm.name}. GameData prefab is now: {(GameData.selectedCarPrefab == null ? "NULL" : GameData.selectedCarPrefab.name)}");
+            // --- END ADD ---
             Debug.Log($"Car confirmed: {carPrefabToConfirm.name}");
             SceneLoader.Instance.ChangeScene("Race"); // Use singleton to load next scene
         }

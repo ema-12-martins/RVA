@@ -37,10 +37,7 @@ public class SceneLoader : MonoBehaviour
             return;
         }
         _instance = this; // Set the instance
-        // Optional: Keep the SceneLoader alive across scene changes
-        // DontDestroyOnLoad(this.gameObject);
-        // Be cautious with DontDestroyOnLoad if you *only* need it for one transition.
-        // If you don't need it to persist, remove or comment out the line above.
+        DontDestroyOnLoad(gameObject);
     }
     // --- End Singleton Implementation ---
 
