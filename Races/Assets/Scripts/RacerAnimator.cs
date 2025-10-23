@@ -1,5 +1,7 @@
 using UnityEngine;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(LapCounter))] // Ensure LapCounter is always present
 public class RacerAnimator : MonoBehaviour
@@ -33,6 +35,8 @@ public class RacerAnimator : MonoBehaviour
     // This event is now triggered by LapCounter
     public event Action OnLapCompleted;
 
+    public List<ItemEffect> activeEffects = new List<ItemEffect>();
+
     void Awake()
     {
         // Get or add LapCounter component
@@ -58,7 +62,7 @@ public class RacerAnimator : MonoBehaviour
             currentPosition = startPosition;
             ApplyPositionAndRotation();
             isInitialized = true;
-            
+
             // Reset lap counter when initializing
             if (lapCounter != null)
             {
@@ -182,6 +186,34 @@ public class RacerAnimator : MonoBehaviour
         if (lapCounter != null)
         {
             lapCounter.OnLapCompleted -= HandleLapCompleted;
+        }
+    }
+
+    public void SetSpeed(float newSpeed)
+    {
+        speed = newSpeed;
+    }
+
+    public void AddEffect(ItemEffect effect)
+    {
+        if (effect != null)
+        {
+            activeEffects.Add(effect);
+            effect.ApplyEffect(gameObject);
+            if (effect.duration > 0f)
+            {
+                StartCoroutine(RemoveEffect(effect, effect.duration));
+            }
+        }
+    }
+
+    private IEnumerator RemoveEffect(ItemEffect effect, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (activeEffects.Contains(effect))
+        {
+            effect.RemoveEffect(gameObject);
+            activeEffects.Remove(effect);
         }
     }
 }
