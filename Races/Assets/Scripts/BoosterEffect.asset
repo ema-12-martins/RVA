@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: BoosterEffect
   m_EditorClassIdentifier: 
   itemName: Booster
-  duration: 0
+  duration: 1
+  dir: -1
+  useDirection: 1
   speedMultiplier: 2

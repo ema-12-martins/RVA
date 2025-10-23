@@ -199,7 +199,8 @@ public class RacerAnimator : MonoBehaviour
         if (effect != null)
         {
             activeEffects.Add(effect);
-            effect.ApplyEffect(gameObject);
+            effect.ApplyEffect(gameObject, effect.dir);
+
             if (effect.duration > 0f)
             {
                 StartCoroutine(RemoveEffect(effect, effect.duration));
@@ -212,7 +213,7 @@ public class RacerAnimator : MonoBehaviour
         yield return new WaitForSeconds(delay);
         if (activeEffects.Contains(effect))
         {
-            effect.RemoveEffect(gameObject);
+            effect.RemoveEffect(gameObject, effect.dir);
             activeEffects.Remove(effect);
         }
     }
