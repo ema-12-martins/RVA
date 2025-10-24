@@ -1688,7 +1688,7 @@ MonoBehaviour:
   PreviewVisible: 1
   RuntimeOcclusion: 0
   RuntimeCollider: 0
-  mTrackableName: green_car
+  mTrackableName: white_car
   mInitializedInEditor: 1
   mDataSetPath: Vuforia/Races.xml
   mAspectRatio: 1
@@ -1728,7 +1728,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mObserverBehaviour: {fileID: 1945253319}
   mHiddenRoot: {fileID: 0}
-  mTargetName: green_car
+  mTargetName: white_car
   mDatasetName: Vuforia/Races.xml
   mCastedBehaviour: {fileID: 1945253319}
   mMeshFilter: {fileID: 0}
