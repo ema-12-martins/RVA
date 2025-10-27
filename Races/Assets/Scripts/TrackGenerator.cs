@@ -36,11 +36,11 @@ public class TrackGenerator : MonoBehaviour
         if (autoUpdate && Application.isPlaying == false)
         {
             // Delay generation to next frame to ensure all components are ready
-            UnityEditor.EditorApplication.delayCall += () =>
-            {
-                if (this != null) // Check if object still exists
-                    GenerateTrack();
-            };
+            //UnityEditor.EditorApplication.delayCall += () =>
+            //{
+            //    if (this != null) // Check if object still exists
+            //        GenerateTrack();
+            //};
         }
     }
     

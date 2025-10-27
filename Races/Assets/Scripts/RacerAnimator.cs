@@ -133,12 +133,15 @@ public class RacerAnimator : MonoBehaviour
 
         if (isPlayerControlled && !isJumping)
         {
-            bool touch = Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began;
-            bool click = Input.GetMouseButtonDown(0);
-            if (touch || click)
+            //Get aceleration
+            float accelY = Input.acceleration.y;
+
+            //If it's above the limit, it jumps
+            if (accelY > 1.0f)
             {
                 isJumping = true;
                 jumpTimer = 0f;
+                Debug.Log("Salto detectado!");
             }
         }
     }
