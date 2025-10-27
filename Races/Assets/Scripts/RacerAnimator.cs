@@ -130,16 +130,14 @@ public class RacerAnimator : MonoBehaviour
         if (isPlayerControlled && !isJumping)
         {
             //Get aceleration
-            Vector3 accel = Input.acceleration;
-
-            //Sensibility
-            float jumpThreshold = 1.1f;
+            float accelY = Input.acceleration.y;
 
             //If it's above the limit, it jumps
-            if (accel.y > jumpThreshold)
+            if (accelY > 1.0f)
             {
                 isJumping = true;
                 jumpTimer = 0f;
+                Debug.Log("Salto detectado!");
             }
         }
     }
