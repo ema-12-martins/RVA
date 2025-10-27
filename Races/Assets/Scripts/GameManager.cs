@@ -1,88 +1,261 @@
-// GameManager.cs
 using UnityEngine;
-using UnityEngine.SceneManagement; // Needed for scene loading
-using TMPro; // Needed for UI text
+using TMPro;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
+    public enum GameState { WaitingForTrack, Countdown, Racing, Paused, TargetLost, Finished }
+
+    [Header("AR Setup")]
+    public TrackTargetHandler trackTargetHandler; // Assign the Track's ImageTarget Handler
+
     [Header("Race Setup")]
     public TrackGenerator track;
-    public int lapsToWin = 1; // Set how many laps are needed
+    public int lapsToWin = 2; // Defaulted back to 2
 
     [Header("Prefabs")]
-    public GameObject opponentCarPrefab; // Assign opponent prefab in Inspector
-
-    [Header("Spawn Points")]
-    // Optional: Use transforms for precise start positions/rotations if needed
-    // public Transform playerStartPoint;
-    // public Transform opponentStartPoint;
+    public GameObject opponentCarPrefab;
 
     [Header("UI")]
-    public GameObject endGamePanel; // Assign the end game panel UI object
-    public TextMeshProUGUI winnerText; // Assign the text element for the winner message
+    public GameObject endGamePanel;
+    public TextMeshProUGUI winnerText;
+    public TextMeshProUGUI countdownText; // Assign a TextMeshPro for countdown
+    public GameObject targetLostPanel;   // Assign a panel for the target lost message
+    public TextMeshProUGUI targetLostText; // Text within the targetLostPanel
 
     private RacerAnimator playerRacer;
     private RacerAnimator opponentRacer;
+    private GameObject playerCarInstance;
+    private GameObject opponentCarInstance;
 
     private int playerLaps = 0;
     private int opponentLaps = 0;
-    private bool raceFinished = false;
+
+    private GameState currentState = GameState.WaitingForTrack;
+    private bool racersSpawned = false;
+    private Coroutine countdownCoroutine;
 
     void Start()
     {
-        // Ensure UI is hidden at start
+        // --- Initial Setup ---
+        Time.timeScale = 1f; // Ensure time scale is normal initially
         if (endGamePanel != null) endGamePanel.SetActive(false);
+        if (countdownText != null) countdownText.gameObject.SetActive(false);
+        if (targetLostPanel != null) targetLostPanel.SetActive(false);
 
-        // Validate references
+        // --- Validate References ---
         if (track == null) Debug.LogError("TrackGenerator not assigned to GameManager!");
-        if (GameData.selectedCarPrefab == null) Debug.LogError("No car selected from previous scene!");
+        if (GameData.selectedCarPrefab == null)
+        {
+             Debug.LogError("No car selected! Returning to Start Menu.");
+             SceneLoader.Instance.LoadMainMenu();
+             return; // Stop execution if no car selected
+        }
         if (opponentCarPrefab == null) Debug.LogError("OpponentCarPrefab not assigned!");
         if (endGamePanel == null || winnerText == null) Debug.LogError("End game UI elements not assigned!");
+        if (countdownText == null) Debug.LogError("Countdown Text not assigned!");
+        if (targetLostPanel == null || targetLostText == null) Debug.LogError("Target Lost UI elements not assigned!");
+        if (trackTargetHandler == null)
+        {
+             Debug.LogError("TrackTargetHandler not assigned! AR detection won't work.");
+        }
+        else
+        {
+            // Subscribe to target events
+            trackTargetHandler.OnTrackFound += HandleTrackFound;
+            trackTargetHandler.OnTrackLost += HandleTrackLost;
+        }
 
+        // --- State Initialization ---
+        ChangeState(GameState.WaitingForTrack);
+
+        // --- Spawn Racers (but keep them inactive/non-moving initially) ---
         SpawnRacers();
+        SetRacersActive(false); // Make sure they don't move yet
     }
 
     void SpawnRacers()
     {
+        if (racersSpawned) return; // Only spawn once
+
+        Vector3 spawnOffset = Vector3.up * 0.1f; // Small vertical offset if needed
+
         if (GameData.selectedCarPrefab != null)
         {
-            // Instantiate Player Car (e.g., in the left lane AT the origin, GameManager handles positioning logic now via InitializeRacer)
-            GameObject playerCar = Instantiate(GameData.selectedCarPrefab, Vector3.zero, Quaternion.identity); // Instantiate at world origin first
-            playerRacer = playerCar.GetComponent<RacerAnimator>();
+            playerCarInstance = Instantiate(GameData.selectedCarPrefab, track.transform.position + spawnOffset, track.transform.rotation);
+            playerCarInstance.transform.SetParent(track.transform, true); // Parent to track
+            playerRacer = playerCarInstance.GetComponent<RacerAnimator>();
             if (playerRacer != null)
             {
-                playerRacer.track = track; // Assign track
+                playerRacer.track = track;
                 playerRacer.leftLane = true;
-                playerRacer.isPlayerControlled = true;
+                playerRacer.isPlayerControlled = true; // Still assumes player control logic exists
                 playerRacer.OnLapCompleted += HandlePlayerLap;
                 playerRacer.name = "PlayerCar";
-                playerRacer.InitializeRacer(); // <<< ADD THIS CALL
+                playerRacer.InitializeRacer();
+                playerRacer.enabled = false; // Disable script initially
             }
-             else { Debug.LogError("Selected Car Prefab does not have a RacerAnimator component!"); }
+            else { Debug.LogError("Selected Car Prefab does not have a RacerAnimator component!"); }
         }
 
         if (opponentCarPrefab != null)
         {
-             // Instantiate Opponent Car (e.g., in the right lane AT the origin)
-            GameObject opponentCar = Instantiate(opponentCarPrefab, Vector3.zero, Quaternion.identity); // Instantiate at world origin first
-            opponentRacer = opponentCar.GetComponent<RacerAnimator>();
+            opponentCarInstance = Instantiate(opponentCarPrefab, track.transform.position + spawnOffset, track.transform.rotation);
+             opponentCarInstance.transform.SetParent(track.transform, true); // Parent to track
+            opponentRacer = opponentCarInstance.GetComponent<RacerAnimator>();
             if (opponentRacer != null)
             {
-                opponentRacer.track = track; // Assign track
+                opponentRacer.track = track;
                 opponentRacer.leftLane = false;
                 opponentRacer.isPlayerControlled = false;
                 opponentRacer.OnLapCompleted += HandleOpponentLap;
-                 opponentRacer.name = "OpponentCar";
-                 opponentRacer.speed = 0.95f;
-                 opponentRacer.InitializeRacer(); // <<< ADD THIS CALL
+                opponentRacer.name = "OpponentCar";
+                opponentRacer.speed = 0.95f; // Example speed adjustment
+                opponentRacer.InitializeRacer();
+                 opponentRacer.enabled = false; // Disable script initially
             }
-             else { Debug.LogError("Opponent Car Prefab does not have a RacerAnimator component!"); }
+            else { Debug.LogError("Opponent Car Prefab does not have a RacerAnimator component!"); }
+        }
+        racersSpawned = true;
+    }
+
+    void ChangeState(GameState newState)
+    {
+        if (currentState == newState) return;
+
+        Debug.Log($"Changing State from {currentState} to {newState}");
+        currentState = newState;
+
+        // Handle state entry logic
+        switch (currentState)
+        {
+            case GameState.WaitingForTrack:
+                Time.timeScale = 1f; // Ensure time is running if we came back here
+                SetRacersActive(false);
+                if (countdownText != null) countdownText.gameObject.SetActive(false);
+                if (targetLostPanel != null) targetLostPanel.SetActive(false);
+                // Optional: Show a "Scan Track Marker" message
+                break;
+            case GameState.Countdown:
+                // Stop previous countdown if any
+                if(countdownCoroutine != null) StopCoroutine(countdownCoroutine);
+                 // Reset laps and positions before starting countdown
+                ResetRaceState();
+                SetRacersActive(true); // Activate racers visually, but scripts still disabled
+                if(playerRacer) playerRacer.enabled = false;
+                if(opponentRacer) opponentRacer.enabled = false;
+                countdownCoroutine = StartCoroutine(CountdownCoroutine());
+                break;
+            case GameState.Racing:
+                Time.timeScale = 1f;
+                SetRacersActive(true); // Ensure racers are active and scripts enabled
+                 if(playerRacer) playerRacer.enabled = true;
+                 if(opponentRacer) opponentRacer.enabled = true;
+                if (countdownText != null) countdownText.gameObject.SetActive(false);
+                if (targetLostPanel != null) targetLostPanel.SetActive(false);
+                break;
+            case GameState.Paused: // Generic pause state (might not be used much with target lost)
+                Time.timeScale = 0f;
+                // Maybe show a generic pause menu?
+                break;
+             case GameState.TargetLost:
+                Time.timeScale = 0f; // Pause the game physics and animations
+                ShowTargetLostMessage();
+                 // Keep racers visually active but disable their scripts
+                 if(playerRacer) playerRacer.enabled = false;
+                 if(opponentRacer) opponentRacer.enabled = false;
+                break;
+            case GameState.Finished:
+                Time.timeScale = 1f; // Or 0f if you want to freeze frame
+                // Ensure racers stop moving immediately
+                 if(playerRacer) playerRacer.enabled = false;
+                 if(opponentRacer) opponentRacer.enabled = false;
+                // EndRace message handled by CheckWinCondition
+                break;
+        }
+    }
+
+     // Called by TrackTargetHandler when the track image is found
+    public void HandleTrackFound()
+    {
+        Debug.Log("Track Found");
+        if (currentState == GameState.WaitingForTrack)
+        {
+            ChangeState(GameState.Countdown);
+        }
+        else if (currentState == GameState.TargetLost)
+        {
+             // Resume Race
+             ChangeState(GameState.Racing); // Resuming will re-enable scripts and set timescale
+        }
+         // If already Racing, Countdown, Finished, or Paused, do nothing on Found
+    }
+
+     // Called by TrackTargetHandler when the track image is lost
+    public void HandleTrackLost()
+    {
+         Debug.Log("Track Lost");
+         // Only pause if we were actively racing or in countdown
+        if (currentState == GameState.Racing || currentState == GameState.Countdown)
+        {
+             if(countdownCoroutine != null)
+             {
+                 StopCoroutine(countdownCoroutine); // Stop countdown if lost during it
+                 countdownCoroutine = null;
+                 if (countdownText != null) countdownText.gameObject.SetActive(false);
+             }
+             ChangeState(GameState.TargetLost);
+        }
+         // If already Waiting, Finished, Paused, or Lost, do nothing on Lost
+    }
+
+    IEnumerator CountdownCoroutine()
+    {
+        if (countdownText == null) yield break;
+
+        countdownText.gameObject.SetActive(true);
+        countdownText.text = "3";
+        yield return new WaitForSeconds(1f);
+
+         if(currentState != GameState.Countdown) yield break; // Check if state changed (e.g., target lost)
+
+        countdownText.text = "2";
+        yield return new WaitForSeconds(1f);
+
+         if(currentState != GameState.Countdown) yield break;
+
+        countdownText.text = "1";
+        yield return new WaitForSeconds(1f);
+
+         if(currentState != GameState.Countdown) yield break;
+
+        countdownText.text = "GO!";
+        ChangeState(GameState.Racing); // Start the race!
+
+        yield return new WaitForSeconds(0.5f); // Keep "GO!" visible briefly
+        if (countdownText != null) countdownText.gameObject.SetActive(false);
+        countdownCoroutine = null;
+    }
+
+    void SetRacersActive(bool isActive)
+    {
+        // Controls visibility and script enabling
+        if (playerCarInstance != null)
+        {
+             playerCarInstance.SetActive(isActive);
+             // Enable/disable script only when going into Racing state or out of TargetLost
+             // if (playerRacer != null) playerRacer.enabled = isActive && (currentState == GameState.Racing);
+        }
+        if (opponentCarInstance != null)
+        {
+             opponentCarInstance.SetActive(isActive);
+             // if (opponentRacer != null) opponentRacer.enabled = isActive && (currentState == GameState.Racing);
         }
     }
 
     void HandlePlayerLap()
     {
-        if (raceFinished) return;
+        if (currentState != GameState.Racing) return;
         playerLaps++;
         Debug.Log($"Player completed lap {playerLaps}");
         CheckWinCondition();
@@ -90,63 +263,98 @@ public class GameManager : MonoBehaviour
 
     void HandleOpponentLap()
     {
-        if (raceFinished) return;
+        if (currentState != GameState.Racing) return;
         opponentLaps++;
         Debug.Log($"Opponent completed lap {opponentLaps}");
         CheckWinCondition();
     }
 
+     void ResetRaceState()
+     {
+        playerLaps = 0;
+        opponentLaps = 0;
+        if (playerRacer != null) playerRacer.ResetPosition();
+        if (opponentRacer != null) opponentRacer.ResetPosition();
+         Debug.Log("Race state reset.");
+     }
+
     void CheckWinCondition()
     {
+        if (currentState != GameState.Racing) return; // Only check if racing
+
         bool playerWins = playerLaps >= lapsToWin;
         bool opponentWins = opponentLaps >= lapsToWin;
+        string winnerMsg = "";
 
-        if (playerWins && opponentWins)
+        if (playerWins && opponentWins) // Tie condition
         {
-            EndRace("It's a Tie!");
+             winnerMsg = "It's a Tie!";
         }
         else if (playerWins)
         {
-            EndRace("Player Wins!");
+             winnerMsg = "Player Wins!";
         }
         else if (opponentWins)
         {
-            // Determine winner name based on prefab if possible
             string winnerName = opponentRacer != null ? opponentRacer.gameObject.name : "Opponent";
-             if(winnerName.Contains("(Clone)")) winnerName = winnerName.Replace("(Clone)", "").Trim(); // Clean up name
-            EndRace($"{winnerName} Wins!");
+            if(winnerName.Contains("(Clone)")) winnerName = winnerName.Replace("(Clone)", "").Trim();
+             winnerMsg = $"{winnerName} Wins!";
+        }
+
+        if(!string.IsNullOrEmpty(winnerMsg))
+        {
+            EndRace(winnerMsg);
         }
     }
 
     void EndRace(string message)
     {
-        raceFinished = true;
+        if (currentState == GameState.Finished) return; // Don't end twice
+
+        ChangeState(GameState.Finished);
         Debug.Log($"Race Finished: {message}");
 
-        // Stop racers (optional, could just let them finish the current animation)
-        // if (playerRacer != null) playerRacer.enabled = false;
-        // if (opponentRacer != null) opponentRacer.enabled = false;
-
-        // Show End Game UI
         if (winnerText != null) winnerText.text = message;
         if (endGamePanel != null) endGamePanel.SetActive(true);
     }
 
-     // --- Public functions to be called by UI Buttons ---
+    void ShowTargetLostMessage()
+    {
+        if (targetLostPanel != null)
+        {
+            // You can customize this message
+            if(targetLostText != null) targetLostText.text = "Track target lost!\nPoint the camera back at the target to resume, or return to Main Menu.";
+            targetLostPanel.SetActive(true);
+        }
+        if (countdownText != null) countdownText.gameObject.SetActive(false); // Hide countdown if lost
+    }
+
+    // --- Public functions to be called by UI Buttons ---
     public void GoToMainMenu()
     {
+        Time.timeScale = 1f; // IMPORTANT: Reset time scale before changing scene
         SceneLoader.Instance.LoadMainMenu();
     }
 
-     public void QuitGame()
+    public void QuitGame() // Renamed for clarity from EndGamePanel UI
     {
+         Time.timeScale = 1f;
         SceneLoader.Instance.QuitGameFunction();
     }
 
-     // Clean up event subscriptions
+    // --- Cleanup ---
     void OnDestroy()
     {
+        // Unsubscribe from events to prevent errors
         if(playerRacer != null) playerRacer.OnLapCompleted -= HandlePlayerLap;
         if(opponentRacer != null) opponentRacer.OnLapCompleted -= HandleOpponentLap;
+        if (trackTargetHandler != null)
+        {
+            trackTargetHandler.OnTrackFound -= HandleTrackFound;
+            trackTargetHandler.OnTrackLost -= HandleTrackLost;
+        }
+
+         // Stop coroutine if object is destroyed
+         if(countdownCoroutine != null) StopCoroutine(countdownCoroutine);
     }
 }
