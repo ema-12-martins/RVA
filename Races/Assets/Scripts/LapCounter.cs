@@ -18,6 +18,7 @@ public class LapCounter : MonoBehaviour
     private int totalLaps = 0;
     private float lastPosition = 0f;
     private bool isInitialized = false;
+    private bool turned = false;
     
     public event Action OnLapCompleted;
 
@@ -44,6 +45,7 @@ public class LapCounter : MonoBehaviour
         checkpointsPassed = new bool[checkpoints.Length];
         ResetCheckpoints();
         isInitialized = true;
+        turned = false;
     }
 
     public void UpdatePosition(float normalizedPosition)
@@ -83,6 +85,18 @@ public class LapCounter : MonoBehaviour
                     Debug.Log($"{gameObject.name} passed checkpoint {currentCheckpointIndex + 1}/{checkpoints.Length} " +
                              $"at position {normalizedPosition:F3}");
                     currentCheckpointIndex++;
+                }
+            }
+
+            //Verify use the shortcut
+            if (normalizedPosition >= 0.35f && normalizedPosition <= 0.40f)
+            {
+                float tilt = Input.acceleration.x;
+                float tiltThreshold = 0.3f;
+
+                if (Mathf.Abs(tilt) > tiltThreshold)
+                {
+                    Debug.Log("O jogador rodou o telemóvel na zona especial!");
                 }
             }
         }
