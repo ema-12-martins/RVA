@@ -94,6 +94,7 @@ public class GameManager : MonoBehaviour
             {
                 playerRacer.track = track;
                 playerRacer.shortcut = shortcut;
+                playerRacer.isPlayer = true;
                 playerRacer.leftLane = true;
                 playerRacer.isPlayerControlled = true; // Still assumes player control logic exists
                 playerRacer.OnLapCompleted += HandlePlayerLap;
@@ -113,6 +114,7 @@ public class GameManager : MonoBehaviour
             {
                 opponentRacer.track = track;
                 opponentRacer.shortcut = shortcut;
+                opponentRacer.isPlayer = false;
                 opponentRacer.leftLane = false;
                 opponentRacer.isPlayerControlled = false;
                 opponentRacer.OnLapCompleted += HandleOpponentLap;

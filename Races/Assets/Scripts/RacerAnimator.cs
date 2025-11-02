@@ -11,6 +11,7 @@ public class RacerAnimator : MonoBehaviour
 
     [Header("Shortcut Reference")]
     public TrackGenerator shortcut;
+    public bool isPlayer; //If is not the player, is the bot -> Can't use the shortcut
 
     [Header("Racer Settings")]
     [Tooltip("Which lane: true = left, false = right")]
@@ -102,7 +103,23 @@ public class RacerAnimator : MonoBehaviour
     {
         if (track == null || shortcut == null) return;
 
-        if (GameManager.selected_track == 1)
+        if (GameManager.selected_track == 2  && isPlayer == true)
+        {
+
+            Vector3 targetPos = shortcut.GetLanePosition(currentPosition, leftLane);
+            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
+            transform.position = targetPos + Vector3.up * currentJumpOffset;
+
+            float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
+            Vector3 lookAheadPos = shortcut.GetLanePosition(lookAheadT, leftLane);
+            Vector3 forward = (lookAheadPos - targetPos).normalized;
+
+            if (forward != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
+            }
+        }
+        else
         {
             Vector3 targetPos = track.GetLanePosition(currentPosition, leftLane);
             float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
@@ -116,22 +133,6 @@ public class RacerAnimator : MonoBehaviour
             {
                 transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
             }
-        }
-        else
-        {
-            Vector3 targetPos = shortcut.GetLanePosition(currentPosition, leftLane);
-            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
-            transform.position = targetPos + Vector3.up * currentJumpOffset;
-
-            float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
-            Vector3 lookAheadPos = shortcut.GetLanePosition(lookAheadT, leftLane);
-            Vector3 forward = (lookAheadPos - targetPos).normalized;
-
-            if (forward != Vector3.zero)
-            {
-                transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
-            }
-
         }
 
     }
