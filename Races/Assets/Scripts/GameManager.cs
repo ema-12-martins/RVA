@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Race Setup")]
     public TrackGenerator track;
+    public TrackGenerator shortcut;
     public int lapsToWin = 2; // Defaulted back to 2
 
     [Header("Prefabs")]
@@ -34,6 +35,10 @@ public class GameManager : MonoBehaviour
     private GameState currentState = GameState.WaitingForTrack;
     private bool racersSpawned = false;
     private Coroutine countdownCoroutine;
+
+    public static float selected_track = 1f; //1=normaltrack 2=shortcut
+
+
 
     void Start()
     {
@@ -88,6 +93,7 @@ public class GameManager : MonoBehaviour
             if (playerRacer != null)
             {
                 playerRacer.track = track;
+                playerRacer.shortcut = shortcut;
                 playerRacer.leftLane = true;
                 playerRacer.isPlayerControlled = true; // Still assumes player control logic exists
                 playerRacer.OnLapCompleted += HandlePlayerLap;
@@ -106,6 +112,7 @@ public class GameManager : MonoBehaviour
             if (opponentRacer != null)
             {
                 opponentRacer.track = track;
+                opponentRacer.shortcut = shortcut;
                 opponentRacer.leftLane = false;
                 opponentRacer.isPlayerControlled = false;
                 opponentRacer.OnLapCompleted += HandleOpponentLap;

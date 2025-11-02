@@ -97,6 +97,7 @@ public class LapCounter : MonoBehaviour
                 if (Mathf.Abs(tilt) > tiltThreshold)
                 {
                     Debug.Log("O jogador rodou o telemóvel na zona especial!");
+                    GameManager.selected_track = (GameManager.selected_track == 1 ? 2 : 1);
                 }
             }
         }
