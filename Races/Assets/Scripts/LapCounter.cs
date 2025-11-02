@@ -127,6 +127,9 @@ public class LapCounter : MonoBehaviour
             checkpointsPassed[i] = false;
         }
         currentCheckpointIndex = 0;
+
+        //To follow by default the big route
+        GameManager.selected_track = 1;
     }
 
     string GetCheckpointStatus()
