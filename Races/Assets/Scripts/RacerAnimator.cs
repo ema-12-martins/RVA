@@ -158,11 +158,12 @@ public class RacerAnimator : MonoBehaviour
 
         if (isPlayerControlled && !isJumping)
         {
-            //Get aceleration
+            //Get acceleration
             float accelY = Input.acceleration.y;
+            Debug.Log("Acceleration Y: " + accelY);
 
             //If it's above the limit, it jumps
-            if (accelY > 1.0f)
+            if (accelY < -1.0f)
             {
                 isJumping = true;
                 jumpTimer = 0f;
