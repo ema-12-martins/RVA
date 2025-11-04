@@ -18,8 +18,6 @@ public class GameManager : MonoBehaviour
     public GameObject opponentCarPrefab;
 
     [Header("UI")]
-    public GameObject endGamePanel;
-    public TextMeshProUGUI winnerText;
     public TextMeshProUGUI countdownText; // Assign a TextMeshPro for countdown
     public GameObject targetLostPanel;   // Assign a panel for the target lost message
     public TextMeshProUGUI targetLostText; // Text within the targetLostPanel
@@ -38,13 +36,15 @@ public class GameManager : MonoBehaviour
 
     public static float selected_track = 1f; //1=normaltrack 2=shortcut
 
+    public string winnerText = null;
+    public string winnerMsg = "";
+
 
 
     void Start()
     {
         // --- Initial Setup ---
         Time.timeScale = 1f; // Ensure time scale is normal initially
-        if (endGamePanel != null) endGamePanel.SetActive(false);
         if (countdownText != null) countdownText.gameObject.SetActive(false);
         if (targetLostPanel != null) targetLostPanel.SetActive(false);
 
@@ -57,7 +57,6 @@ public class GameManager : MonoBehaviour
              return; // Stop execution if no car selected
         }
         if (opponentCarPrefab == null) Debug.LogError("OpponentCarPrefab not assigned!");
-        if (endGamePanel == null || winnerText == null) Debug.LogError("End game UI elements not assigned!");
         if (countdownText == null) Debug.LogError("Countdown Text not assigned!");
         if (targetLostPanel == null || targetLostText == null) Debug.LogError("Target Lost UI elements not assigned!");
         if (trackTargetHandler == null)
@@ -293,7 +292,7 @@ public class GameManager : MonoBehaviour
 
         bool playerWins = playerLaps >= lapsToWin;
         bool opponentWins = opponentLaps >= lapsToWin;
-        string winnerMsg = "";
+
 
         if (playerWins && opponentWins) // Tie condition
         {
@@ -323,8 +322,9 @@ public class GameManager : MonoBehaviour
         ChangeState(GameState.Finished);
         Debug.Log($"Race Finished: {message}");
 
-        if (winnerText != null) winnerText.text = message;
-        if (endGamePanel != null) endGamePanel.SetActive(true);
+        GameData.finalText = winnerMsg;
+
+        SceneLoader.Instance.ChangeScene("FinalMenu");
     }
 
     void ShowTargetLostMessage()
