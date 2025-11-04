@@ -6,6 +6,9 @@ public class GameManager : MonoBehaviour
 {
     public enum GameState { WaitingForTrack, Countdown, Racing, Paused, TargetLost, Finished }
 
+    [Header("Change Scenes")]
+    public SceneLoader sceneLoader;
+
     [Header("AR Setup")]
     public TrackTargetHandler trackTargetHandler; // Assign the Track's ImageTarget Handler
 
@@ -53,7 +56,7 @@ public class GameManager : MonoBehaviour
         if (GameData.selectedCarPrefab == null)
         {
              Debug.LogError("No car selected! Returning to Start Menu.");
-             SceneLoader.Instance.LoadMainMenu();
+             sceneLoader.ChangeScene("StartMenu");
              return; // Stop execution if no car selected
         }
         if (opponentCarPrefab == null) Debug.LogError("OpponentCarPrefab not assigned!");
@@ -324,7 +327,7 @@ public class GameManager : MonoBehaviour
 
         GameData.finalText = winnerMsg;
 
-        SceneLoader.Instance.ChangeScene("FinalMenu");
+        sceneLoader.ChangeScene("FinalMenu");
     }
 
     void ShowTargetLostMessage()
@@ -338,18 +341,6 @@ public class GameManager : MonoBehaviour
         if (countdownText != null) countdownText.gameObject.SetActive(false); // Hide countdown if lost
     }
 
-    // --- Public functions to be called by UI Buttons ---
-    public void GoToMainMenu()
-    {
-        Time.timeScale = 1f; // IMPORTANT: Reset time scale before changing scene
-        SceneLoader.Instance.LoadMainMenu();
-    }
-
-    public void QuitGame() // Renamed for clarity from EndGamePanel UI
-    {
-         Time.timeScale = 1f;
-        SceneLoader.Instance.QuitGameFunction();
-    }
 
     // --- Cleanup ---
     void OnDestroy()
