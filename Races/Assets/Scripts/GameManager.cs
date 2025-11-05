@@ -6,19 +6,21 @@ public class GameManager : MonoBehaviour
 {
     public enum GameState { WaitingForTrack, Countdown, Racing, Paused, TargetLost, Finished }
 
+    [Header("Change Scenes")]
+    public SceneLoader sceneLoader;
+
     [Header("AR Setup")]
     public TrackTargetHandler trackTargetHandler; // Assign the Track's ImageTarget Handler
 
     [Header("Race Setup")]
     public TrackGenerator track;
+    public TrackGenerator shortcut;
     public int lapsToWin = 2; // Defaulted back to 2
 
     [Header("Prefabs")]
     public GameObject opponentCarPrefab;
 
     [Header("UI")]
-    public GameObject endGamePanel;
-    public TextMeshProUGUI winnerText;
     public TextMeshProUGUI countdownText; // Assign a TextMeshPro for countdown
     public GameObject targetLostPanel;   // Assign a panel for the target lost message
     public TextMeshProUGUI targetLostText; // Text within the targetLostPanel
@@ -35,11 +37,17 @@ public class GameManager : MonoBehaviour
     private bool racersSpawned = false;
     private Coroutine countdownCoroutine;
 
+    public static float selected_track = 1f; //1=normaltrack 2=shortcut
+
+    public string winnerText = null;
+    public string winnerMsg = "";
+
+
+
     void Start()
     {
         // --- Initial Setup ---
         Time.timeScale = 1f; // Ensure time scale is normal initially
-        if (endGamePanel != null) endGamePanel.SetActive(false);
         if (countdownText != null) countdownText.gameObject.SetActive(false);
         if (targetLostPanel != null) targetLostPanel.SetActive(false);
 
@@ -48,11 +56,10 @@ public class GameManager : MonoBehaviour
         if (GameData.selectedCarPrefab == null)
         {
              Debug.LogError("No car selected! Returning to Start Menu.");
-             SceneLoader.Instance.LoadMainMenu();
+             sceneLoader.ChangeScene("StartMenu");
              return; // Stop execution if no car selected
         }
         if (opponentCarPrefab == null) Debug.LogError("OpponentCarPrefab not assigned!");
-        if (endGamePanel == null || winnerText == null) Debug.LogError("End game UI elements not assigned!");
         if (countdownText == null) Debug.LogError("Countdown Text not assigned!");
         if (targetLostPanel == null || targetLostText == null) Debug.LogError("Target Lost UI elements not assigned!");
         if (trackTargetHandler == null)
@@ -88,6 +95,8 @@ public class GameManager : MonoBehaviour
             if (playerRacer != null)
             {
                 playerRacer.track = track;
+                playerRacer.shortcut = shortcut;
+                playerRacer.isPlayer = true;
                 playerRacer.leftLane = true;
                 playerRacer.isPlayerControlled = true; // Still assumes player control logic exists
                 playerRacer.OnLapCompleted += HandlePlayerLap;
@@ -106,6 +115,8 @@ public class GameManager : MonoBehaviour
             if (opponentRacer != null)
             {
                 opponentRacer.track = track;
+                opponentRacer.shortcut = shortcut;
+                opponentRacer.isPlayer = false;
                 opponentRacer.leftLane = false;
                 opponentRacer.isPlayerControlled = false;
                 opponentRacer.OnLapCompleted += HandleOpponentLap;
@@ -284,7 +295,7 @@ public class GameManager : MonoBehaviour
 
         bool playerWins = playerLaps >= lapsToWin;
         bool opponentWins = opponentLaps >= lapsToWin;
-        string winnerMsg = "";
+
 
         if (playerWins && opponentWins) // Tie condition
         {
@@ -314,8 +325,9 @@ public class GameManager : MonoBehaviour
         ChangeState(GameState.Finished);
         Debug.Log($"Race Finished: {message}");
 
-        if (winnerText != null) winnerText.text = message;
-        if (endGamePanel != null) endGamePanel.SetActive(true);
+        GameData.finalText = winnerMsg;
+
+        sceneLoader.ChangeScene("FinalMenu");
     }
 
     void ShowTargetLostMessage()
@@ -329,18 +341,6 @@ public class GameManager : MonoBehaviour
         if (countdownText != null) countdownText.gameObject.SetActive(false); // Hide countdown if lost
     }
 
-    // --- Public functions to be called by UI Buttons ---
-    public void GoToMainMenu()
-    {
-        Time.timeScale = 1f; // IMPORTANT: Reset time scale before changing scene
-        SceneLoader.Instance.LoadMainMenu();
-    }
-
-    public void QuitGame() // Renamed for clarity from EndGamePanel UI
-    {
-         Time.timeScale = 1f;
-        SceneLoader.Instance.QuitGameFunction();
-    }
 
     // --- Cleanup ---
     void OnDestroy()

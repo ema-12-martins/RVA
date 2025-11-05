@@ -4,6 +4,9 @@ using TMPro; // Required for TextMeshProUGUI
 
 public class CarSelectionUIManager : MonoBehaviour
 {
+    [Header("Change Scenes")]
+    public SceneLoader sceneLoader;
+
     [Header("UI Elements")]
     public GameObject confirmationPanel; // Parent panel containing Text and Button
     public TextMeshProUGUI textConfirm;
@@ -67,7 +70,7 @@ public class CarSelectionUIManager : MonoBehaviour
             Debug.Log($"Car confirmed: {carPrefabToConfirm.name}. GameData prefab is now: {(GameData.selectedCarPrefab == null ? "NULL" : GameData.selectedCarPrefab.name)}");
             // --- END ADD ---
             Debug.Log($"Car confirmed: {carPrefabToConfirm.name}");
-            SceneLoader.Instance.ChangeScene("Race"); // Use singleton to load next scene
+            sceneLoader.ChangeScene("Race"); // Use singleton to load next scene
         }
         else
         {

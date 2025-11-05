@@ -18,6 +18,7 @@ public class LapCounter : MonoBehaviour
     private int totalLaps = 0;
     private float lastPosition = 0f;
     private bool isInitialized = false;
+    private bool turned = false;
     
     public event Action OnLapCompleted;
 
@@ -44,6 +45,7 @@ public class LapCounter : MonoBehaviour
         checkpointsPassed = new bool[checkpoints.Length];
         ResetCheckpoints();
         isInitialized = true;
+        turned = false;
     }
 
     public void UpdatePosition(float normalizedPosition)
@@ -85,6 +87,19 @@ public class LapCounter : MonoBehaviour
                     currentCheckpointIndex++;
                 }
             }
+
+            //Verify use the shortcut
+            if (normalizedPosition >= 0.35f && normalizedPosition <= 0.40f)
+            {
+                float tilt = Input.acceleration.x;
+                float tiltThreshold = 0.3f;
+
+                if (Mathf.Abs(tilt) > tiltThreshold)
+                {
+                    Debug.Log("O jogador rodou o telemóvel na zona especial!");
+                    GameManager.selected_track = (GameManager.selected_track == 1 ? 2 : 1);
+                }
+            }
         }
         
         lastPosition = normalizedPosition;
@@ -112,6 +127,9 @@ public class LapCounter : MonoBehaviour
             checkpointsPassed[i] = false;
         }
         currentCheckpointIndex = 0;
+
+        //To follow by default the big route
+        GameManager.selected_track = 1;
     }
 
     string GetCheckpointStatus()

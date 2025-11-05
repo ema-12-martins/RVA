@@ -9,6 +9,10 @@ public class RacerAnimator : MonoBehaviour
     [Header("Track Reference")]
     public TrackGenerator track;
 
+    [Header("Shortcut Reference")]
+    public TrackGenerator shortcut;
+    public bool isPlayer; //If is not the player, is the bot -> Can't use the shortcut
+
     [Header("Racer Settings")]
     [Tooltip("Which lane: true = left, false = right")]
     public bool leftLane = true;
@@ -57,11 +61,12 @@ public class RacerAnimator : MonoBehaviour
 
     public void InitializeRacer()
     {
-        if (track != null && !isInitialized)
+        if (track != null && shortcut != null && !isInitialized)
         {
             currentPosition = startPosition;
             ApplyPositionAndRotation();
             isInitialized = true;
+            GameManager.selected_track = 1;
 
             // Reset lap counter when initializing
             if (lapCounter != null)
@@ -75,7 +80,7 @@ public class RacerAnimator : MonoBehaviour
 
     void Update()
     {
-        if (!isInitialized || track == null)
+        if (!isInitialized || track == null || shortcut == null)
         {
             if (!isInitialized) InitializeRacer();
             if (!isInitialized) return;
@@ -96,20 +101,40 @@ public class RacerAnimator : MonoBehaviour
 
     void ApplyPositionAndRotation()
     {
-        if (track == null) return;
+        if (track == null || shortcut == null) return;
 
-        Vector3 targetPos = track.GetLanePosition(currentPosition, leftLane);
-        float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
-        transform.position = targetPos + Vector3.up * currentJumpOffset;
-
-        float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
-        Vector3 lookAheadPos = track.GetLanePosition(lookAheadT, leftLane);
-        Vector3 forward = (lookAheadPos - targetPos).normalized;
-
-        if (forward != Vector3.zero)
+        if (GameManager.selected_track == 2  && isPlayer == true)
         {
-            transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
+
+            Vector3 targetPos = shortcut.GetLanePosition(currentPosition, leftLane);
+            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
+            transform.position = targetPos + Vector3.up * currentJumpOffset;
+
+            float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
+            Vector3 lookAheadPos = shortcut.GetLanePosition(lookAheadT, leftLane);
+            Vector3 forward = (lookAheadPos - targetPos).normalized;
+
+            if (forward != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
+            }
         }
+        else
+        {
+            Vector3 targetPos = track.GetLanePosition(currentPosition, leftLane);
+            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
+            transform.position = targetPos + Vector3.up * currentJumpOffset;
+
+            float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
+            Vector3 lookAheadPos = track.GetLanePosition(lookAheadT, leftLane);
+            Vector3 forward = (lookAheadPos - targetPos).normalized;
+
+            if (forward != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
+            }
+        }
+
     }
 
     void HandleJumping()
@@ -133,11 +158,12 @@ public class RacerAnimator : MonoBehaviour
 
         if (isPlayerControlled && !isJumping)
         {
-            //Get aceleration
+            //Get acceleration
             float accelY = Input.acceleration.y;
+            Debug.Log("Acceleration Y: " + accelY);
 
             //If it's above the limit, it jumps
-            if (accelY > 1.0f)
+            if (accelY < -1.0f)
             {
                 isJumping = true;
                 jumpTimer = 0f;
