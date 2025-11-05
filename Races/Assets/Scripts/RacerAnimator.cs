@@ -35,6 +35,7 @@ public class RacerAnimator : MonoBehaviour
     private float currentPosition;
     private bool isInitialized = false;
     private LapCounter lapCounter;
+    private int botTrack = 1;
 
     // This event is now triggered by LapCounter
     public event Action OnLapCompleted;
@@ -103,7 +104,7 @@ public class RacerAnimator : MonoBehaviour
     {
         if (track == null || shortcut == null) return;
 
-        if (GameManager.selected_track == 2  && isPlayer == true)
+        if ((GameManager.selected_track == 2  && isPlayer == true) || (isPlayer == false && botTrack == 2))
         {
 
             Vector3 targetPos = shortcut.GetLanePosition(currentPosition, leftLane);
@@ -189,7 +190,20 @@ public class RacerAnimator : MonoBehaviour
         {
             lapCounter.ResetLaps();
         }
-        
+
+        float probabilityShortcut = UnityEngine.Random.value;
+        Debug.Log($"PROBABILITY: {probabilityShortcut}");
+        if (probabilityShortcut < GameData.probabilityOfOvercomingObstacles)
+        {
+            botTrack = 2;
+            Debug.Log($"FOLLOW SHORTCUT");
+        }
+        else
+        {
+            botTrack = 1;
+            Debug.Log($"FOLLOW NORMAL PATH");
+        }
+
         InitializeRacer();
     }
 
