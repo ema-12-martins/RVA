@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2640074887791420779}
   - component: {fileID: 120527221673546617}
   m_Layer: 0
-  m_Name: Tire Pile
+  m_Name: TirePile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -66,7 +66,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2, y: 0.7, z: 1}
+  m_Size: {x: 0.5, y: 0.2, z: 0.25}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &2388412589276987726
 PrefabInstance:
@@ -113,12 +113,24 @@ PrefabInstance:
       value: 
       objectReference: {fileID: -7335272152993507980, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
     - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.125
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -151,6 +163,10 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 10b54df4d69de5c408624ef819f6611c, type: 3}
       propertyPath: m_Name

@@ -17,9 +17,7 @@ public class LapCounter : MonoBehaviour
     private bool[] checkpointsPassed;
     private int totalLaps = 0;
     private float lastPosition = 0f;
-    private bool isInitialized = false;
-    private bool turned = false;
-    
+    private bool isInitialized = false;    
     public event Action OnLapCompleted;
 
     void Awake()
@@ -45,7 +43,6 @@ public class LapCounter : MonoBehaviour
         checkpointsPassed = new bool[checkpoints.Length];
         ResetCheckpoints();
         isInitialized = true;
-        turned = false;
     }
 
     public void UpdatePosition(float normalizedPosition)

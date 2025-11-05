@@ -103,7 +103,7 @@ public class LaneSnapper : MonoBehaviour
 
             // Read card yaw & quantize to 90° steps (if enabled)
             float cardYaw = Quaternion.LookRotation(transform.forward, Vector3.up).eulerAngles.y;
-            currentYawStepDeg = quantizeRotation90 ? Quantize90(cardYaw) : Mathf.Repeat(cardYaw, 360f);
+            currentYawStepDeg = quantizeRotation90 ? Quantize180(cardYaw) : Mathf.Repeat(cardYaw, 360f);
 
             // Enter/keep locked follow
             SetLocked(true);
@@ -123,7 +123,7 @@ public class LaneSnapper : MonoBehaviour
             UpdateOnTargetVisual(false);
             UpdatePreviewVisual(true);
             SetLaneBadge(lane);
-            SetFeedback($"You can rotate the card in 90° steps. To confirm tap place.");
+            SetFeedback($"You can rotate by 180º\nTo confirm tap 'Place'");
             SetConfirmVisible(true);
         }
         else
@@ -161,10 +161,10 @@ public class LaneSnapper : MonoBehaviour
         return bestT;
     }
 
-    float Quantize90(float yawDeg)
+    float Quantize180(float yawDeg)
     {
-        // Return nearest multiple of 90
-        float step = Mathf.Round(yawDeg / 90f) * 90f;
+        // Return nearest multiple of 180
+        float step = Mathf.Round(yawDeg / 180f) * 180f;
         // Normalize to [0,360)
         return (step % 360f + 360f) % 360f;
     }
