@@ -30,8 +30,8 @@ public class RacerAnimator : MonoBehaviour
     public bool isPlayerControlled = false;
 
     [Header("Jump Settings")]
-    public float jumpHeight = 1f;
-    public float jumpDuration = 0.5f;
+    public float jumpHeight = 5f;
+    public float jumpDuration = 30f;
     private bool isJumping = false;
     private float jumpTimer = 0f;
     private float jumpOffset = 0.3f;
@@ -218,7 +218,7 @@ public class RacerAnimator : MonoBehaviour
             }
             jumpTimer += Time.deltaTime;
             float t = Mathf.Clamp01(jumpTimer / jumpDuration);
-            jumpOffset = 4 * jumpHeight * t * (1 - t) + 0.3f;
+            jumpOffset = jumpHeight * t * (1 - t) + 0.3f;
 
             if (jumpTimer >= jumpDuration)
             {
