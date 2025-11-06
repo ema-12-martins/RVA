@@ -3,19 +3,13 @@ using UnityEngine.UI;
 using TMPro;
 using Vuforia;
 
-/// <summary>
-/// Attach to the ImageTarget of a placeable object (e.g., ConeTarget).
-/// Shows a preview that snaps to the nearest lane when within threshold,
-/// follows the lane while you stay close, supports 90° rotation steps by rotating the card,
-/// and confirms to bake a copy into the track prefab.
-/// </summary>
 public class LaneSnapper : MonoBehaviour
 {
     public enum LaneSide { Left, Right }
 
     [Header("References")]
     [Tooltip("Your Track root that has TrackGenerator (anchored under the track ImageTarget)")]
-    [SerializeField] TrackGenerator track;   // uses GetTrackPosition/GetLanePosition (from your script)
+    [SerializeField] TrackGenerator track;
     [Tooltip("Optional parent under the track where confirmed objects are stored")]
     [SerializeField] Transform placedObjectsParent; 
 
@@ -34,22 +28,22 @@ public class LaneSnapper : MonoBehaviour
     [SerializeField, Range(64, 2048)] int curveSamples = 512;
 
     [Header("Rotation")]
-    [Tooltip("Rotate the card; we read its yaw and snap to 0/90/180/270")]
-    [SerializeField] bool quantizeRotation90 = true;
+    [Tooltip("Rotate the card; we read its yaw and snap to 0/180")]
+    [SerializeField] bool quantizeRotation180 = true;
 
     [Header("UI")]
-    [SerializeField] Canvas worldCanvas;     // world-space canvas near the preview
+    [SerializeField] Canvas worldCanvas;
     [SerializeField] TMP_Text feedbackText;
     [SerializeField] Button confirmButton;
-    [SerializeField] TMP_Text laneBadgeText; // e.g., "LEFT LANE" / "RIGHT LANE"
+    [SerializeField] TMP_Text laneBadgeText;
 
     ObserverBehaviour targetObserver;
 
     bool isLocked;
     LaneSide currentLane;
-    float currentT;            // current param along the curve
-    float currentYawStepDeg;   // 0,90,180,270
-    Quaternion laneRot;        // forward-aligned rotation from track tangent
+    float currentT;
+    float currentYawStepDeg;
+    Quaternion laneRot;
 
     void Awake()
     {
@@ -65,7 +59,6 @@ public class LaneSnapper : MonoBehaviour
         bool tracked = IsTracked(targetObserver.TargetStatus);
         if (!tracked)
         {
-            // Lost tracking: ensure we appear as "not locked"
             SetLocked(false);
             UpdateOnTargetVisual(true);
             UpdatePreviewVisual(false);
@@ -73,17 +66,12 @@ public class LaneSnapper : MonoBehaviour
             return;
         }
 
-        // Where is the card in world space?
         Vector3 cardPos = transform.position;
-
-        // Find closest parameter t along the track center
         float t = FindClosestT(cardPos, curveSamples);
 
-        // Lane centers at t
         Vector3 leftPos = track.GetLanePosition(t, true);
         Vector3 rightPos = track.GetLanePosition(t, false);
 
-        // Which lane is closer?
         float dL = Vector3.Distance(cardPos, leftPos);
         float dR = Vector3.Distance(cardPos, rightPos);
 
@@ -94,41 +82,33 @@ public class LaneSnapper : MonoBehaviour
             LaneSide lane = dL <= dR ? LaneSide.Left : LaneSide.Right;
             Vector3 targetLanePos = lane == LaneSide.Left ? leftPos : rightPos;
 
-            // Compute forward/tangent for rotation alignment
             const float dt = 1f / 2048f;
             Vector3 p0 = track.GetTrackPosition(t);
             Vector3 p1 = track.GetTrackPosition(t + dt);
             Vector3 fwd = (p1 - p0).sqrMagnitude > 1e-8f ? (p1 - p0).normalized : transform.forward;
             laneRot = Quaternion.LookRotation(fwd, Vector3.up);
 
-            // Read card yaw & quantize to 90° steps (if enabled)
             float cardYaw = Quaternion.LookRotation(transform.forward, Vector3.up).eulerAngles.y;
-            currentYawStepDeg = quantizeRotation90 ? Quantize180(cardYaw) : Mathf.Repeat(cardYaw, 360f);
+            currentYawStepDeg = quantizeRotation180 ? Quantize180(cardYaw) : Mathf.Repeat(cardYaw, 360f);
 
-            // Enter/keep locked follow
             SetLocked(true);
             currentLane = lane;
             currentT = t;
 
-            // Smooth follow of preview
             if (previewVisual)
             {
-                // move
                 previewVisual.position = Vector3.Lerp(previewVisual.position, targetLanePos, followTightness);
-                // rotate: lane forward * stepped yaw around up
                 previewVisual.rotation = laneRot * Quaternion.Euler(0f, currentYawStepDeg, 0f);
             }
 
-            // UI feedback
             UpdateOnTargetVisual(false);
             UpdatePreviewVisual(true);
             SetLaneBadge(lane);
-            SetFeedback($"You can rotate by 180º\nTo confirm tap 'Place'");
+            SetFeedback($"You can rotate by 180°\nTo confirm tap 'Place'");
             SetConfirmVisible(true);
         }
         else
         {
-            // Not close enough: unlocked, show object on the card, hide preview
             if (!isLocked)
             {
                 UpdateOnTargetVisual(true);
@@ -143,7 +123,6 @@ public class LaneSnapper : MonoBehaviour
 
     float FindClosestT(Vector3 worldPos, int samples)
     {
-        // Brute-force sample the curve (center line) via your TrackGenerator API. :contentReference[oaicite:1]{index=1}
         float bestT = 0f;
         float bestD2 = float.MaxValue;
 
@@ -163,9 +142,7 @@ public class LaneSnapper : MonoBehaviour
 
     float Quantize180(float yawDeg)
     {
-        // Return nearest multiple of 180
         float step = Mathf.Round(yawDeg / 180f) * 180f;
-        // Normalize to [0,360)
         return (step % 360f + 360f) % 360f;
     }
 
@@ -173,15 +150,20 @@ public class LaneSnapper : MonoBehaviour
     {
         if (!isLocked || previewVisual == null) return;
 
-        // Create (or ensure) a parent for placed objects
         Transform parent = placedObjectsParent != null ? placedObjectsParent : EnsurePlacedParent();
 
-        // Bake a copy at the preview pose
         var baked = Instantiate(previewVisual.gameObject, parent);
         baked.transform.SetPositionAndRotation(previewVisual.position, previewVisual.rotation);
+        
+        // Store parametric metadata for later reconstruction
+        var meta = baked.AddComponent<PlacedObjectMetadata>();
+        meta.t = currentT;
+        meta.isLeftLane = currentLane == LaneSide.Left;
+        meta.yawOffset = currentYawStepDeg;
+        meta.prefabName = previewVisual.name;
+        
         baked.name = previewVisual.name + "_Placed";
 
-        // Stay in unlocked state so user can keep using the card
         SetLocked(false);
         UpdateOnTargetVisual(true);
         UpdatePreviewVisual(false);
