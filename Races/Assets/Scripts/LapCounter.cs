@@ -1,6 +1,7 @@
 // LapCounter.cs - Modified version for shortcut pausing & checkpoint sync
 using UnityEngine;
 using System;
+using UnityEngine.InputSystem;
 
 public class LapCounter : MonoBehaviour
 {
@@ -106,7 +107,7 @@ public class LapCounter : MonoBehaviour
             // Request enter shortcut on tilt
             if (inShortcutZone)
             {
-                float tilt = Input.acceleration.x;
+                float tilt = LinearAccelerationSensor.current.acceleration.ReadValue().x;
                 const float tiltThreshold = 0.3f;
                 if (Mathf.Abs(tilt) > tiltThreshold)
                 {
