@@ -10,10 +10,11 @@ public class JumpAfterCollision : MonoBehaviour
 
         if (racerAnimator != null)
         {
+            Debug.Log("It's a racer! Deciding to jump...");
             if (UnityEngine.Random.value < GameData.probabilityOfOvercomingObstacles)
             {
+                Debug.Log("Racer will jump!");
                 GameData.isJumpingForBot = true;
-                GameData.jumpTimerForBot = 0;
             }
         }
 

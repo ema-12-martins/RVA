@@ -5,9 +5,8 @@ using UnityEngine;
 public static class GameData
 {
 
-    //Handling Bpt jump
+    //Handling Bot jump
     public static bool isJumpingForBot = false;
-    public static float jumpTimerForBot = 0;
 
     public static GameObject selectedCarPrefab = null;
     public static string finalText = null; // If win or lost

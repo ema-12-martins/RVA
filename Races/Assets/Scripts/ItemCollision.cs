@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Animations;
 
 public class ItemCollision : MonoBehaviour
 {
@@ -20,7 +21,7 @@ public class ItemCollision : MonoBehaviour
             if (itemEffect.useDirection)
             {
                 Vector3 carForward = other.transform.forward;
-                Vector3 itemForward = transform.forward;
+                Vector3 itemForward = transform.parent.forward;
 
                 Debug.Log("Car Forward: " + carForward);
                 Debug.Log("Item Forward: " + itemForward);

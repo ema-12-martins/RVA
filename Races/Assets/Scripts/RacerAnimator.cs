@@ -212,6 +212,10 @@ public class RacerAnimator : MonoBehaviour
     {
         if (isJumping)
         {
+            if (!isPlayerControlled)
+            {
+                Debug.Log("Bot is jumping NOW!");
+            }
             jumpTimer += Time.deltaTime;
             float t = Mathf.Clamp01(jumpTimer / jumpDuration);
             jumpOffset = 4 * jumpHeight * t * (1 - t) + 0.3f;
@@ -220,18 +224,10 @@ public class RacerAnimator : MonoBehaviour
             {
                 isJumping = false;
                 jumpOffset = 0.3f;
-            }
-        }
-        else if (GameData.isJumpingForBot)
-        {
-            GameData.jumpTimerForBot += Time.deltaTime;
-            float t = Mathf.Clamp01(GameData.jumpTimerForBot / jumpDuration);
-            jumpOffset = 4 * jumpHeight * t * (1 - t) + 0.3f;
-
-            if (GameData.jumpTimerForBot >= jumpDuration)
-            {
-                isJumping = false;
-                jumpOffset = 0.3f;
+                if (!isPlayerControlled)
+                {
+                    GameData.isJumpingForBot = false;
+                }
             }
         }
         else
@@ -249,6 +245,13 @@ public class RacerAnimator : MonoBehaviour
                 jumpTimer = 0f;
             }
         }
+        else if (!isPlayerControlled && !isJumping && GameData.isJumpingForBot)
+        {
+            Debug.Log("Bot is jumping!");
+            isJumping = true;
+            jumpTimer = 0f;
+        }
+            
     }
 
     void HandleLapCompleted()
