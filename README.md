@@ -28,13 +28,13 @@ The game is composed by the following 6 scenes:
 
 When the game starts, it displays a button, the Start button. If the player selects Start button, the game proceeds to the next scene, the DifficultyMenu.
 
-FOOTOOOOOOOOOO
+![foto_scene](./readme/1.png)
 
 # DifficultyMenu
 
 This scene shows to the user the 3 options of levels: Easy, Medium, Hard. After the player selects one of the difficulties, the level of the difficulty of the game is settle and the game follows for the next scene, the SelectCar scene.
 
-FOTO
+![foto_scene](./readme/2.png)
 
 # SelectCar
 
@@ -42,7 +42,7 @@ At this stage, the smartphone camera activates, allowing the player to **choose 
 
 Once the target is successfully detected, a confirmation message appears, asking whether the player is sure about their chosen car. By selecting Confirm, the player proceeds to the next scene, the TrackPlanning.
 
-FOTOOOOOOO
+![foto_scene](./readme/3.png)
 
 # TrackPlanning
 
@@ -50,7 +50,7 @@ During this phase, the player must first aim at the **track marker to reveal it*
 
 Once the player is satisfied with the position, they simply click in "Place" to confirm the placement. **Up to three obstacles or power-ups** can be placed — with a maximum of one tire pile and two arrows. When the planning phase is complete, clicking "Save & Race" will take the player to the racing scene.
 
-FOTOOOOOOO
+![foto_scene](./readme/4.png)
 
 # Race
 
@@ -70,9 +70,13 @@ Red arrows may help or harm the racer depending on the direction they are crosse
 
 When the race finishes, the game move you for the FinalMenu.
 
+![foto_scene](./readme/5.png)
+
 # FinalMenu
 
 The finalMenu show you the result of the race, e.g, says if you won our lost the Race. It also show the player two button, one to quit the game, the "Quit", and other to return to the first menu, the "Main Menu".
+
+![foto_scene](./readme/6.png)
 
 
 # Assets
