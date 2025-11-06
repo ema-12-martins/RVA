@@ -28,31 +28,26 @@ public class TrackTargetHandler : MonoBehaviour
 
     private void OnTargetStatusChanged(ObserverBehaviour behaviour, TargetStatus status)
     {
-        // Determine if the target is considered "found" (TRACKED or EXTENDED_TRACKED)
         bool tracked = status.Status == Status.TRACKED ||
                        status.Status == Status.EXTENDED_TRACKED;
 
-        // Check if the tracking status has changed since the last update
         if (tracked != isCurrentlyTracked)
         {
-            isCurrentlyTracked = tracked; // Update the current status
+            isCurrentlyTracked = tracked;
 
             if (isCurrentlyTracked)
             {
                 Debug.Log($"Track target '{behaviour.TargetName}' FOUND.");
-                OnTrackFound?.Invoke(); // Fire the found event
+                OnTrackFound?.Invoke();
             }
             else
             {
                  Debug.Log($"Track target '{behaviour.TargetName}' LOST.");
-                 OnTrackLost?.Invoke(); // Fire the lost event
+                 OnTrackLost?.Invoke();
             }
         }
-         // Log detailed status if needed
-         // Debug.Log($"Target: {behaviour.TargetName}, Status: {status.Status}, StatusInfo: {status.StatusInfo}");
     }
 
-    // Clean up the event subscription when the object is destroyed
     void OnDestroy()
     {
         if (observer != null)
@@ -60,7 +55,4 @@ public class TrackTargetHandler : MonoBehaviour
             observer.OnTargetStatusChanged -= OnTargetStatusChanged;
         }
     }
-
-     // Public property to check current status if needed elsewhere
-     public bool IsTracked => isCurrentlyTracked;
 }

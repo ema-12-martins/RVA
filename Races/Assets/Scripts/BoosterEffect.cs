@@ -1,5 +1,3 @@
-using System.Numerics;
-using Unity.VisualScripting;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "BoosterEffect", menuName = "ScriptableObjects/ItemEffects/BoosterEffect")]
@@ -27,7 +25,7 @@ public class BoosterEffect : ItemEffect
 
     public override void ApplyEffect(GameObject target, int d = 1)
     {
-        this.dir = d;
+        dir = d;
         if (d < 0 && useDirection)
         {
             RemoveEffect(target);
@@ -40,7 +38,7 @@ public class BoosterEffect : ItemEffect
 
     public override void RemoveEffect(GameObject target, int d = 1)
     {
-        if (this.dir < 0 && useDirection)
+        if (dir < 0 && useDirection)
         {
             ApplyEffect(target);
         }else

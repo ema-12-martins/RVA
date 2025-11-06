@@ -27,7 +27,7 @@ public class BillboardCanvas : MonoBehaviour
 
         if (yawOnly)
         {
-            // Match only camera yaw; keep canvas upright in world space
+            // Keep the canvas upright in world space
             Vector3 forward = targetCamera.transform.forward;
             forward.y = 0f;
             if (forward.sqrMagnitude < 1e-6f) forward = Vector3.forward;

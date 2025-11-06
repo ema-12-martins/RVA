@@ -10,7 +10,6 @@ public class CarSelection : MonoBehaviour
     [Header("Manager Reference")]
     public CarSelectionUIManager uiManager;
 
-    // Reference to the Vuforia ObserverBehaviour
     private ObserverBehaviour observer;
 
     void Start()
@@ -34,7 +33,6 @@ public class CarSelection : MonoBehaviour
             }
         }
 
-        // Basic validation
         if (carPrefab == null)
         {
             Debug.LogError("Car Prefab is not assigned in the Inspector!", this);
@@ -49,30 +47,20 @@ public class CarSelection : MonoBehaviour
         {
             if (isDetected)
             {
-                // Tell the UI Manager to show confirmation for *this* car
-                uiManager.ShowConfirmation(carPrefab, carPrefab.name); // Pass prefab and name
+                uiManager.ShowConfirmation(carPrefab, carPrefab.name);
             }
             else
             {
-                 // Check if the UI *is currently showing confirmation for this specific car*
-                 // before hiding it, to prevent hiding if another target was just detected.
-                 // This requires the UIManager to expose which prefab it's currently showing.
-                 // (Let's keep it simple for now and just hide - refine if needed later)
                  uiManager.HideConfirmation();
             }
         }
     }
 
-    // Clean up the event subscription when the object is destroyed
     void OnDestroy()
     {
         if (observer != null)
         {
             observer.OnTargetStatusChanged -= OnTargetStatusChanged;
         }
-        // Optional: If the UI is showing *this* car when it's destroyed, hide the UI
-        // if (uiManager != null && uiManager.GetCurrentPrefab() == carPrefab) {
-        //     uiManager.HideConfirmation();
-        // }
     }
 }

@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.UI; // Required for Button
-using TMPro; // Required for TextMeshProUGUI
+using UnityEngine.UI;
+using TMPro;
 
 public class CarSelectionUIManager : MonoBehaviour
 {
@@ -8,18 +8,16 @@ public class CarSelectionUIManager : MonoBehaviour
     public SceneLoader sceneLoader;
 
     [Header("UI Elements")]
-    public GameObject confirmationPanel; // Parent panel containing Text and Button
+    public GameObject confirmationPanel;
     public TextMeshProUGUI textConfirm;
     public Button buttonConfirm;
 
-    private GameObject carPrefabToConfirm = null; // Store which car is currently targeted
+    private GameObject carPrefabToConfirm = null;
 
     void Start()
     {
-        // Ensure UI is hidden initially
         HideConfirmation();
 
-        // Add listener to the button's click event via code
         if (buttonConfirm != null)
         {
             buttonConfirm.onClick.AddListener(OnConfirmButtonClicked);
@@ -38,25 +36,25 @@ public class CarSelectionUIManager : MonoBehaviour
     // Called by ShowHUDOnDetectCar when a target is found
     public void ShowConfirmation(GameObject carPrefab, string carName)
     {
-        carPrefabToConfirm = carPrefab; // Store the prefab reference
+        carPrefabToConfirm = carPrefab;
 
         if (textConfirm != null)
         {
-            textConfirm.text = $"Select {carName}?"; // Update text
+            textConfirm.text = $"Select {carName}?";
         }
         if (confirmationPanel != null)
         {
-            confirmationPanel.SetActive(true); // Show the panel (and its children)
+            confirmationPanel.SetActive(true);
         }
     }
 
     // Called by ShowHUDOnDetectCar when a target is lost
     public void HideConfirmation()
     {
-        carPrefabToConfirm = null; // Clear the reference
+        carPrefabToConfirm = null;
         if (confirmationPanel != null)
         {
-            confirmationPanel.SetActive(false); // Hide the panel
+            confirmationPanel.SetActive(false);
         }
     }
 
@@ -66,21 +64,14 @@ public class CarSelectionUIManager : MonoBehaviour
         if (carPrefabToConfirm != null)
         {
             GameData.selectedCarPrefab = carPrefabToConfirm;
-            // --- ADD THIS LOG ---
-            Debug.Log($"Car confirmed: {carPrefabToConfirm.name}. GameData prefab is now: {(GameData.selectedCarPrefab == null ? "NULL" : GameData.selectedCarPrefab.name)}");
-            // --- END ADD ---
-            Debug.Log($"Car confirmed: {carPrefabToConfirm.name}");
-            sceneLoader.ChangeScene("TrackPlanning"); // Use singleton to load next scene
+            sceneLoader.ChangeScene("TrackPlanning");
         }
         else
         {
-            // This case shouldn't happen if button is only active when showing confirmation,
-            // but good practice to handle it.
             Debug.LogWarning("Confirm button clicked, but no car prefab was stored.");
         }
     }
 
-    // Clean up listener when destroyed
     void OnDestroy()
     {
         if (buttonConfirm != null)

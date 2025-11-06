@@ -1,4 +1,3 @@
-// LapCounter.cs - Modified version for shortcut pausing & checkpoint sync
 using UnityEngine;
 using System;
 using UnityEngine.InputSystem;
@@ -21,10 +20,8 @@ public class LapCounter : MonoBehaviour
 
     public event Action OnLapCompleted;
 
-    // NEW: request entering the shortcut (RacerAnimator listens)
     public event Action OnShortcutEnterRequested;
 
-    // NEW: while on shortcut we pause lap counting logic entirely
     [NonSerialized] public bool lapCountingPaused = false;
 
     private bool wasInShortcutZone = false;
@@ -56,14 +53,12 @@ public class LapCounter : MonoBehaviour
     public void UpdatePosition(float normalizedPosition)
     {
         if (!isInitialized) Initialize();
-        if (lapCountingPaused) return; // << NEW: ignore updates while on shortcut
+        if (lapCountingPaused) return; // Ignore updates while on shortcut
 
-        // Check if we crossed the finish line (wrap around from high to low)
         bool crossedFinishLine = lastPosition > 0.9f && normalizedPosition < 0.1f;
 
         if (crossedFinishLine)
         {
-            // Only count lap if all checkpoints were passed
             if (AllCheckpointsPassed())
             {
                 totalLaps++;
@@ -72,11 +67,10 @@ public class LapCounter : MonoBehaviour
             }
             else
             {
-                ResetCheckpoints(); // Reset anyway to prevent getting stuck
+                ResetCheckpoints(); // Prevent getting stuck
             }
         }
 
-        // Check current checkpoint
         if (currentCheckpointIndex < checkpoints.Length)
         {
             float targetCheckpoint = checkpoints[currentCheckpointIndex];
@@ -92,17 +86,6 @@ public class LapCounter : MonoBehaviour
 
             // --- Shortcut decision area ---
             bool inShortcutZone = normalizedPosition >= 0.35f && normalizedPosition <= 0.4f;
-
-            if (inShortcutZone && !wasInShortcutZone)
-            {
-                Debug.Log($"[{name}] ENTERED shortcut zone at normalizedPosition={normalizedPosition:F3}");
-            }
-            else if (!inShortcutZone && wasInShortcutZone)
-            {
-                Debug.Log($"[{name}] EXITED shortcut zone at normalizedPosition={normalizedPosition:F3}");
-            }
-
-            wasInShortcutZone = inShortcutZone;
 
             // Request enter shortcut on tilt
             if (inShortcutZone)
@@ -147,16 +130,6 @@ public class LapCounter : MonoBehaviour
         GameManager.selected_track = 1;
     }
 
-    string GetCheckpointStatus()
-    {
-        string status = "";
-        for (int i = 0; i < checkpointsPassed.Length; i++)
-        {
-            status += $"CP{i + 1}:{(checkpointsPassed[i] ? "✓" : "✗")} ";
-        }
-        return status;
-    }
-
     public int GetTotalLaps()
     {
         return totalLaps;
@@ -170,7 +143,6 @@ public class LapCounter : MonoBehaviour
         lastPosition = 0f;
     }
 
-    // NEW: mark checkpoints crossed between two normalized positions (handles wrap)
     public void SyncCheckpointsBetween(float fromPos, float toPos)
     {
         if (checkpoints == null || checkpoints.Length == 0) return;
@@ -194,11 +166,9 @@ public class LapCounter : MonoBehaviour
             }
         }
 
-        // Align lastPosition to prevent false wrap detection
         lastPosition = toPos;
     }
 
-    // Optional: Visualize checkpoints in editor
     void OnDrawGizmos()
     {
         if (checkpoints == null || checkpoints.Length == 0) return;
@@ -216,12 +186,5 @@ public class LapCounter : MonoBehaviour
         Gizmos.color = Color.green;
         Vector3 finishPos = track.GetTrackPosition(0f);
         Gizmos.DrawWireSphere(finishPos + Vector3.up * 2f, 0.7f);
-
-        // Shortcut zone visualization
-        Gizmos.color = new Color(0.1f, 0.8f, 1f, 0.8f);
-        Vector3 z1 = track.GetTrackPosition(0.15f);
-        Vector3 z2 = track.GetTrackPosition(0.2f);
-        Gizmos.DrawWireSphere(z1 + Vector3.up * 1.5f, 0.3f);
-        Gizmos.DrawWireSphere(z2 + Vector3.up * 1.5f, 0.3f);
     }
 }

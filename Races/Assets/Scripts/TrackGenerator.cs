@@ -38,11 +38,7 @@ public class TrackGenerator : MonoBehaviour
 
     void OnValidate()
     {
-        if (autoUpdate && Application.isPlaying == false)
-        {
-            // Intentionally left off delayed generate in editor to avoid spam
-        }
-        // Invalidate cached length if something changed
+        if (autoUpdate && Application.isPlaying == false) {}
         cachedTrackLength = -1f;
     }
 
@@ -69,7 +65,6 @@ public class TrackGenerator : MonoBehaviour
             }
         }
 
-        // Setup components
         meshFilter = GetComponent<MeshFilter>();
         if (meshFilter == null)
             meshFilter = gameObject.AddComponent<MeshFilter>();
@@ -78,13 +73,10 @@ public class TrackGenerator : MonoBehaviour
         if (meshRenderer == null)
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
 
-        // Generate curve points
         List<Vector3> curvePoints = GenerateCurvePoints();
 
-        // Calculate and cache track length
         cachedTrackLength = CalculateTrackLength(curvePoints);
 
-        // Create track mesh
         Mesh trackMesh = CreateTrackMesh(curvePoints);
 
         if (meshFilter != null)
@@ -93,7 +85,6 @@ public class TrackGenerator : MonoBehaviour
         if (trackMaterial != null && meshRenderer != null)
             meshRenderer.sharedMaterial = trackMaterial;
 
-        // Create divider line
         CreateDividerLine(curvePoints);
     }
 
@@ -175,9 +166,9 @@ public class TrackGenerator : MonoBehaviour
         }
         else
         {
-            int numSegs = controlPoints.Length - 1; // segments
+            int numSegs = controlPoints.Length - 1;
             float scaledT = Mathf.Clamp01(t) * numSegs;
-            int seg = Mathf.FloorToInt(scaledT); // 0..numSegs-1
+            int seg = Mathf.FloorToInt(scaledT);
             float localT = Mathf.Clamp01(scaledT - seg);
 
             int i0 = Mathf.Clamp(seg - 1, 0, controlPoints.Length - 1);
@@ -220,10 +211,9 @@ public class TrackGenerator : MonoBehaviour
         List<int> triangles = new List<int>();
         List<Vector2> uvs = new List<Vector2>();
 
-        // --- Build rings using stable tangents (central differences) ---
+        // Build rings using stable tangents (central differences)
         for (int i = 0; i < pointCount; i++)
         {
-            // choose prev/next robustly
             Vector3 prev, next;
             if (isClosed)
             {
@@ -241,8 +231,8 @@ public class TrackGenerator : MonoBehaviour
             }
 
             Vector3 current = centerPoints[i];
-            Vector3 tangent = (next - prev);
-            if (tangent.sqrMagnitude < 1e-8f) tangent = Vector3.forward; // super-rare fallback
+            Vector3 tangent = next - prev;
+            if (tangent.sqrMagnitude < 1e-8f) tangent = Vector3.forward; // fallback
             tangent.Normalize();
 
             Vector3 right = Vector3.Cross(Vector3.up, tangent).normalized;
@@ -265,12 +255,12 @@ public class TrackGenerator : MonoBehaviour
             uvs.Add(new Vector2(1, uvY));
         }
 
-        // --- Connect rings ---
+        // Connect rings
         int last = isClosed ? pointCount : pointCount - 1;
         for (int i = 0; i < last; i++)
         {
             int current = i * 4;
-            int next = ((i + 1) % pointCount) * 4;
+            int next = (i + 1) % pointCount * 4;
             if (!isClosed && i == pointCount - 1) break;
 
             // Top surface
@@ -310,7 +300,7 @@ public class TrackGenerator : MonoBehaviour
             triangles.Add(current + 3);
         }
 
-        // --- End caps for OPEN tracks (close the thickness neatly) ---
+        // End caps for OPEN tracks
         if (!isClosed && pointCount >= 2)
         {
             int start = 0;                     // first ring base index
@@ -377,8 +367,8 @@ public class TrackGenerator : MonoBehaviour
         float dividerWidth = 0.05f;
         float dividerHeight = 0.02f;
 
-        List<Vector3> vertices = new List<Vector3>();
-        List<int> triangles = new List<int>();
+        List<Vector3> vertices = new();
+        List<int> triangles = new();
 
         for (int i = 0; i < centerPoints.Count; i++)
         {
@@ -400,7 +390,7 @@ public class TrackGenerator : MonoBehaviour
         for (int i = 0; i < last; i++)
         {
             int current = i * 2;
-            int next = ((i + 1) % centerPoints.Count) * 2;
+            int next = (i + 1) % centerPoints.Count * 2;
             if (!isClosed && i == centerPoints.Count - 1) break;
 
             triangles.Add(current);
@@ -422,7 +412,7 @@ public class TrackGenerator : MonoBehaviour
             dividerRenderer.sharedMaterial = dividerMaterial;
     }
 
-    // Public method to get a point on the track at normalized position t (0 to 1)
+    // Gets a point on the track at normalized position t (0 to 1)
     public Vector3 GetTrackPosition(float t)
     {
         return GetPointOnCurve(isClosed ? Mathf.Repeat(t, 1f) : Mathf.Clamp01(t));

@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(LapCounter))] // Ensure LapCounter is always present
+[RequireComponent(typeof(LapCounter))]
 public class RacerAnimator : MonoBehaviour
 {
     [Header("Track Reference")]
@@ -48,7 +48,7 @@ public class RacerAnimator : MonoBehaviour
 
     public List<ItemEffect> activeEffects = new List<ItemEffect>();
 
-    // NEW: shortcut state
+    // Shortcut state
     private bool isInShortcut = false;
     private float shortcutT = 0f; // normalized along the open shortcut (0 -> 1)
     private float mainPosBeforeShortcut = 0f;
@@ -63,7 +63,6 @@ public class RacerAnimator : MonoBehaviour
 
         lapCounter.OnLapCompleted += HandleLapCompleted;
 
-        // Subscribe to shortcut request from LapCounter
         lapCounter.OnShortcutEnterRequested += HandleShortcutEnterRequested;
     }
 
@@ -81,7 +80,6 @@ public class RacerAnimator : MonoBehaviour
             isInitialized = true;
             GameManager.selected_track = 1;
 
-            // Reset lap counter when initializing
             if (lapCounter != null)
             {
                 lapCounter.ResetLaps();
@@ -91,7 +89,7 @@ public class RacerAnimator : MonoBehaviour
             isInShortcut = false;
             shortcutT = 0f;
 
-            Debug.Log($"{this.name} initialized on track at position {startPosition:F3}");
+            Debug.Log($"{name} initialized on track at position {startPosition:F3}");
 
             if (isPlayerControlled)
             {
@@ -139,18 +137,18 @@ public class RacerAnimator : MonoBehaviour
                 if (lapCounter != null)
                 {
                     lapCounter.SyncCheckpointsBetween(mainPosBeforeShortcut, rejoinT);
-                    lapCounter.lapCountingPaused = false; // resume counting
+                    lapCounter.lapCountingPaused = false;
                 }
 
                 currentPosition = rejoinT; // resume movement on main at nearest point
                 isInShortcut = false;
-                GameManager.selected_track = 1; // keep consistent for debug/other systems
+                GameManager.selected_track = 1;
             }
 
-            return; // skip main-track motion in this frame
+            return;
         }
 
-        // ----- NORMAL MAIN-TRACK MOVEMENT -----
+        // NORMAL MAIN-TRACK MOVEMENT
         TrackGenerator currentTrack = GetCurrentTrack();
         float trackLength = currentTrack.GetTrackLength();
         float normalizedSpeed = speed / trackLength;
@@ -167,19 +165,16 @@ public class RacerAnimator : MonoBehaviour
         // BOT shortcut decision: only decide inside the same zone as player, once per lap
         if (!isPlayer && !isInShortcut)
         {
-            // Must match LapCounter's decision window (0.35–0.40)
             bool inShortcutZone = currentPosition >= 0.35f && currentPosition <= 0.40f;
 
             if (inShortcutZone && !botShortcutDecidedThisLap)
             {
                 botShortcutDecidedThisLap = true; // decide once per lap when entering the zone
 
-                // Keep using the exact same probability you had before
                 if (UnityEngine.Random.value < GameData.probabilityOfOvercomingObstacles)
                 {
-                    EnterShortcutNow(); // go through the open-shortcut path (pauses lap counting, etc.)
+                    EnterShortcutNow();
                 }
-                // else: skip this lap and continue on main track
             }
         }
 
@@ -235,13 +230,11 @@ public class RacerAnimator : MonoBehaviour
         if (isPlayerControlled && !isJumping)
         {
             float accelY = LinearAccelerationSensor.current.acceleration.ReadValue().y;
-            // Debug.Log("Acceleration Y: " + accelY);
 
             if (accelY > 0.5f)
             {
                 isJumping = true;
                 jumpTimer = 0f;
-                // Debug.Log("Jump detected!");
             }
         }
     }
@@ -271,7 +264,7 @@ public class RacerAnimator : MonoBehaviour
         if (lapCounter != null)
             lapCounter.lapCountingPaused = true;
 
-        GameManager.selected_track = 2; // for consistency/debug visibility
+        GameManager.selected_track = 2;
     }
 
     public void ResetPosition()

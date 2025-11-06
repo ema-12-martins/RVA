@@ -30,7 +30,6 @@ public class ItemCollision : MonoBehaviour
                 }
             }
 
-            // Apply item effect to the racer
             racerAnimator.AddEffect(itemEffect);
         }
     }

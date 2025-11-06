@@ -155,7 +155,7 @@ public class LaneSnapper : MonoBehaviour
         var baked = Instantiate(previewVisual.gameObject, parent);
         baked.transform.SetPositionAndRotation(previewVisual.position, previewVisual.rotation);
         
-        // Store parametric metadata for later reconstruction
+        // Store metadata to later rebuild in 'Race' track
         var meta = baked.AddComponent<PlacedObjectMetadata>();
         meta.t = currentT;
         meta.isLeftLane = currentLane == LaneSide.Left;

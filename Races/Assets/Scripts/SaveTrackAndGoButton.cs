@@ -38,7 +38,6 @@ public class SaveTrackAndGoButton : MonoBehaviour
 
         var save = new GameData.TrackSaveData();
 
-        // Save parametric placement data from metadata components
         save.objects = new List<GameData.PlacedObjectData>();
         if (placedObjectsParent != null)
         {

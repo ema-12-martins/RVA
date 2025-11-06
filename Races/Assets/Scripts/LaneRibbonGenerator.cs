@@ -47,8 +47,8 @@ public class LaneRibbonGenerator : MonoBehaviour
             Vector3 leftPos  = track.GetLanePosition(t, true);
             Vector3 rightPos = track.GetLanePosition(t, false);
 
-            // Small upward offset to avoid z-fighting
-            float yOffset = 0.05f; // 1 cm above the track
+            // Small upward offset to better distinguish against track
+            float yOffset = 0.05f;
             leftPos.y  += yOffset;
             rightPos.y += yOffset;
 
