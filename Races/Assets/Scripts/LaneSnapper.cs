@@ -33,11 +33,16 @@ public class LaneSnapper : MonoBehaviour
 
     [Header("Placement Limits")]
     [Tooltip("Maximum number of objects allowed. 0 = no limit")]
-    [SerializeField] int maxPlacements = 10;
+    [SerializeField] int maxPlacements = 3;
     [Tooltip("If objects lack Renderers, fall back to this min world-space separation (meters)")]
     [SerializeField, Range(0f, 2f)] float minSeparationDistance = 0.30f;
     [Tooltip("Extra world-space padding when checking Renderer bounds overlap (meters)")]
     [SerializeField, Range(0f, 0.2f)] float boundsPadding = 0.01f;
+
+    [Header("Track Restrictions")]
+    [Tooltip("Exclusion zone at track start (normalized). No placement allowed here.")]
+    [Range(0f, 0.3f)]
+    [SerializeField] float startExclusionZone = 0.15f;
 
     [Header("UI")]
     [SerializeField] Canvas worldCanvas;
@@ -115,7 +120,15 @@ public class LaneSnapper : MonoBehaviour
             UpdatePreviewVisual(true);
             SetLaneBadge(lane);
 
-            // --- NEW: gate placement by limit + overlap
+            // Check if in exclusion zone
+            if (t < startExclusionZone)
+            {
+                SetFeedback($"Too close to start/finish line. Move further along the track.");
+                SetConfirmVisible(false);
+                return;
+            }
+
+            // Check placement limits and overlaps
             var parent = GetPlacedParentMaybe();
             int placedCount = CountPlaced(parent);
             bool limitReached = maxPlacements > 0 && placedCount >= maxPlacements;
@@ -180,9 +193,16 @@ public class LaneSnapper : MonoBehaviour
     {
         if (!isLocked || previewVisual == null) return;
 
+        // Check exclusion zone
+        if (currentT < startExclusionZone)
+        {
+            SetFeedback($"Too close to start/finish line.");
+            return;
+        }
+
         Transform parent = placedObjectsParent != null ? placedObjectsParent : EnsurePlacedParent();
 
-        // --- NEW: enforce cap right before committing
+        // Enforce cap right before committing
         int placedCount = CountPlaced(parent);
         if (maxPlacements > 0 && placedCount >= maxPlacements)
         {
@@ -190,7 +210,7 @@ public class LaneSnapper : MonoBehaviour
             return;
         }
 
-        // --- NEW: block overlapping commit
+        // Block overlapping commit
         if (WouldOverlap(previewVisual, parent))
         {
             SetFeedback("Can't place here: overlaps another object. Move along the lane.");
@@ -283,7 +303,7 @@ public class LaneSnapper : MonoBehaviour
             return false;
         }
 
-        // Fallback: no renderers on candidate — use distance check
+        // Fallback: no renderers on candidate – use distance check
         for (int i = 0; i < parent.childCount; i++)
         {
             var other = parent.GetChild(i);

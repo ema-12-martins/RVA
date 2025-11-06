@@ -13,4 +13,7 @@ public class PlacedObjectMetadata : MonoBehaviour
 
     [Tooltip("Name/identifier of the prefab to spawn during reconstruction")]
     public string prefabName;
+
+    [Tooltip("If true, this object was placed by the AI opponent")]
+    public bool isAI;
 }
