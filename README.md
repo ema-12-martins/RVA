@@ -48,7 +48,7 @@ FOTOOOOOOO
 
 During this phase, the player must first aim at the **track marker to reveal it**. After that, they can place **obstacles or power-ups** strategically by **positioning their markers near the track target**. The game displays the objects in real time while the player moves them.
 
-Once the player is satisfied with the position, they simply click in "Place" to confirm the placement. **Up to three obstacles or power-ups** can be placed. When the planning phase is complete, clicking "Save & Race" will take the player to the racing scene.
+Once the player is satisfied with the position, they simply click in "Place" to confirm the placement. **Up to three obstacles or power-ups** can be placed — with a maximum of one tire pile and two arrows. When the planning phase is complete, clicking "Save & Race" will take the player to the racing scene.
 
 FOTOOOOOOO
 
