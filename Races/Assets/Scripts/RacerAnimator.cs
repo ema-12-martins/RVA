@@ -112,7 +112,7 @@ public class RacerAnimator : MonoBehaviour
 
             // Position/orientation from shortcut
             Vector3 targetPos = shortcut.GetLanePosition(shortcutT, leftLane);
-            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
+            float currentJumpOffset = isJumping ? jumpOffset : 0.05f;
             transform.position = targetPos + Vector3.up * currentJumpOffset;
 
             float lookAheadT = Mathf.Clamp01(shortcutT + 0.01f);
@@ -194,7 +194,7 @@ public class RacerAnimator : MonoBehaviour
         TrackGenerator currentTrack = GetCurrentTrack();
 
         Vector3 targetPos = currentTrack.GetLanePosition(currentPosition, leftLane);
-        float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
+        float currentJumpOffset = isJumping ? jumpOffset : 0.05f;
         transform.position = targetPos + Vector3.up * currentJumpOffset;
 
         float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
@@ -223,7 +223,7 @@ public class RacerAnimator : MonoBehaviour
         }
         else
         {
-            jumpOffset = 0.3f;
+            jumpOffset = 0.05f;
         }
 
         if (isPlayerControlled && !isJumping)
