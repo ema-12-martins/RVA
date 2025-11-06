@@ -222,6 +222,18 @@ public class RacerAnimator : MonoBehaviour
                 jumpOffset = 0.3f;
             }
         }
+        else if (GameData.isJumpingForBot)
+        {
+            GameData.jumpTimerForBot += Time.deltaTime;
+            float t = Mathf.Clamp01(GameData.jumpTimerForBot / jumpDuration);
+            jumpOffset = 4 * jumpHeight * t * (1 - t) + 0.3f;
+
+            if (GameData.jumpTimerForBot >= jumpDuration)
+            {
+                isJumping = false;
+                jumpOffset = 0.3f;
+            }
+        }
         else
         {
             jumpOffset = 0.05f;
