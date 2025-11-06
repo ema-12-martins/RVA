@@ -70,7 +70,7 @@ public class CarSelectionUIManager : MonoBehaviour
             Debug.Log($"Car confirmed: {carPrefabToConfirm.name}. GameData prefab is now: {(GameData.selectedCarPrefab == null ? "NULL" : GameData.selectedCarPrefab.name)}");
             // --- END ADD ---
             Debug.Log($"Car confirmed: {carPrefabToConfirm.name}");
-            sceneLoader.ChangeScene("Race"); // Use singleton to load next scene
+            sceneLoader.ChangeScene("TrackPlanning"); // Use singleton to load next scene
         }
         else
         {

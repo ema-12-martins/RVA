@@ -11,17 +11,20 @@ public class RacerAnimator : MonoBehaviour
 
     [Header("Shortcut Reference")]
     public TrackGenerator shortcut;
-    public bool isPlayer; //If is not the player, is the bot -> Can't use the shortcut
+    public bool isPlayer; // If not player, it's a bot
 
     [Header("Racer Settings")]
     [Tooltip("Which lane: true = left, false = right")]
     public bool leftLane = true;
+
     [Range(0.1f, 10f)]
-    [Tooltip("Speed multiplier")]
+    [Tooltip("Speed multiplier (units per second)")]
     public float speed = 1f;
+
     [Range(0f, 1f)]
     [Tooltip("Starting position on track (0 to 1)")]
     public float startPosition = 0f;
+
     [Tooltip("Is this racer controlled by player input?")]
     public bool isPlayerControlled = false;
 
@@ -32,27 +35,35 @@ public class RacerAnimator : MonoBehaviour
     private float jumpTimer = 0f;
     private float jumpOffset = 0.3f;
 
+    [Header("Bot Shortcut Decision")]
+    private bool botShortcutDecidedThisLap = false;
+
     private float currentPosition;
     private bool isInitialized = false;
     private LapCounter lapCounter;
-    private int botTrack = 1;
 
-    // This event is now triggered by LapCounter
+    // Forwarded event
     public event Action OnLapCompleted;
 
     public List<ItemEffect> activeEffects = new List<ItemEffect>();
 
+    // NEW: shortcut state
+    private bool isInShortcut = false;
+    private float shortcutT = 0f; // normalized along the open shortcut (0 -> 1)
+    private float mainPosBeforeShortcut = 0f;
+
     void Awake()
     {
-        // Get or add LapCounter component
         lapCounter = GetComponent<LapCounter>();
         if (lapCounter == null)
         {
             lapCounter = gameObject.AddComponent<LapCounter>();
         }
-        
-        // Subscribe to lap counter's event
+
         lapCounter.OnLapCompleted += HandleLapCompleted;
+
+        // Subscribe to shortcut request from LapCounter
+        lapCounter.OnShortcutEnterRequested += HandleShortcutEnterRequested;
     }
 
     void Start()
@@ -73,8 +84,12 @@ public class RacerAnimator : MonoBehaviour
             if (lapCounter != null)
             {
                 lapCounter.ResetLaps();
+                lapCounter.lapCountingPaused = false;
             }
-            
+
+            isInShortcut = false;
+            shortcutT = 0f;
+
             Debug.Log($"{this.name} initialized on track at position {startPosition:F3}");
         }
     }
@@ -87,55 +102,109 @@ public class RacerAnimator : MonoBehaviour
             if (!isInitialized) return;
         }
 
-        currentPosition += speed * Time.deltaTime * 0.1f;
+        if (isInShortcut)
+        {
+            // Move along the (open) shortcut from t=0 -> t=1
+            float shortcutLength = shortcut.GetTrackLength();
+            float shortcutNormSpeed = speed / shortcutLength;
+            shortcutT += shortcutNormSpeed * Time.deltaTime;
+            shortcutT = Mathf.Clamp01(shortcutT);
+
+            // Position/orientation from shortcut
+            Vector3 targetPos = shortcut.GetLanePosition(shortcutT, leftLane);
+            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
+            transform.position = targetPos + Vector3.up * currentJumpOffset;
+
+            float lookAheadT = Mathf.Clamp01(shortcutT + 0.01f);
+            Vector3 lookAheadPos = shortcut.GetLanePosition(lookAheadT, leftLane);
+            Vector3 forward = (lookAheadPos - targetPos).normalized;
+            if (forward != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
+
+            HandleJumping();
+
+            // Reached end of shortcut: rejoin main track
+            if (shortcutT >= 1f - Mathf.Epsilon)
+            {
+                Vector3 exitWorld = shortcut.GetLanePosition(1f, leftLane);
+                float rejoinT = track.FindClosestT(exitWorld, 768);
+
+                // Sync checkpoints that would have been crossed between mainPosBeforeShortcut -> rejoinT
+                if (lapCounter != null)
+                {
+                    lapCounter.SyncCheckpointsBetween(mainPosBeforeShortcut, rejoinT);
+                    lapCounter.lapCountingPaused = false; // resume counting
+                }
+
+                currentPosition = rejoinT; // resume movement on main at nearest point
+                isInShortcut = false;
+                GameManager.selected_track = 1; // keep consistent for debug/other systems
+            }
+
+            return; // skip main-track motion in this frame
+        }
+
+        // ----- NORMAL MAIN-TRACK MOVEMENT -----
+        TrackGenerator currentTrack = GetCurrentTrack();
+        float trackLength = currentTrack.GetTrackLength();
+        float normalizedSpeed = speed / trackLength;
+
+        currentPosition += normalizedSpeed * Time.deltaTime;
         currentPosition = Mathf.Repeat(currentPosition, 1f);
 
-        // Update lap counter with current position
+        // Update lap counter only while on main
         if (lapCounter != null)
         {
             lapCounter.UpdatePosition(currentPosition);
+        }
+
+        // BOT shortcut decision: only decide inside the same zone as player, once per lap
+        if (!isPlayer && !isInShortcut)
+        {
+            // Must match LapCounter's decision window (0.35–0.40)
+            bool inShortcutZone = currentPosition >= 0.35f && currentPosition <= 0.40f;
+
+            if (inShortcutZone && !botShortcutDecidedThisLap)
+            {
+                botShortcutDecidedThisLap = true; // decide once per lap when entering the zone
+
+                // Keep using the exact same probability you had before
+                if (UnityEngine.Random.value < GameData.probabilityOfOvercomingObstacles)
+                {
+                    EnterShortcutNow(); // go through the open-shortcut path (pauses lap counting, etc.)
+                }
+                // else: skip this lap and continue on main track
+            }
         }
 
         ApplyPositionAndRotation();
         HandleJumping();
     }
 
+    TrackGenerator GetCurrentTrack()
+    {
+        if (isInShortcut) return shortcut;
+        return track;
+    }
+
     void ApplyPositionAndRotation()
     {
         if (track == null || shortcut == null) return;
 
-        if ((GameManager.selected_track == 2  && isPlayer == true) || (isPlayer == false && botTrack == 2))
+        TrackGenerator currentTrack = GetCurrentTrack();
+
+        Vector3 targetPos = currentTrack.GetLanePosition(currentPosition, leftLane);
+        float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
+        transform.position = targetPos + Vector3.up * currentJumpOffset;
+
+        float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
+        Vector3 lookAheadPos = currentTrack.GetLanePosition(lookAheadT, leftLane);
+        Vector3 forward = (lookAheadPos - targetPos).normalized;
+
+        if (forward != Vector3.zero)
         {
-
-            Vector3 targetPos = shortcut.GetLanePosition(currentPosition, leftLane);
-            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
-            transform.position = targetPos + Vector3.up * currentJumpOffset;
-
-            float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
-            Vector3 lookAheadPos = shortcut.GetLanePosition(lookAheadT, leftLane);
-            Vector3 forward = (lookAheadPos - targetPos).normalized;
-
-            if (forward != Vector3.zero)
-            {
-                transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
-            }
+            transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
         }
-        else
-        {
-            Vector3 targetPos = track.GetLanePosition(currentPosition, leftLane);
-            float currentJumpOffset = isJumping ? jumpOffset : 0.3f;
-            transform.position = targetPos + Vector3.up * currentJumpOffset;
-
-            float lookAheadT = Mathf.Repeat(currentPosition + 0.01f, 1f);
-            Vector3 lookAheadPos = track.GetLanePosition(lookAheadT, leftLane);
-            Vector3 forward = (lookAheadPos - targetPos).normalized;
-
-            if (forward != Vector3.zero)
-            {
-                transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
-            }
-        }
-
     }
 
     void HandleJumping()
@@ -159,24 +228,44 @@ public class RacerAnimator : MonoBehaviour
 
         if (isPlayerControlled && !isJumping)
         {
-            //Get acceleration
             float accelY = Input.acceleration.y;
-            Debug.Log("Acceleration Y: " + accelY);
+            // Debug.Log("Acceleration Y: " + accelY);
 
-            //If it's above the limit, it jumps
             if (accelY < -1.0f)
             {
                 isJumping = true;
                 jumpTimer = 0f;
-                Debug.Log("Salto detectado!");
+                // Debug.Log("Jump detected!");
             }
         }
     }
 
     void HandleLapCompleted()
     {
-        // Forward the lap counter's event to subscribers
         OnLapCompleted?.Invoke();
+        botShortcutDecidedThisLap = false;
+    }
+
+    private void HandleShortcutEnterRequested()
+    {
+        // Only the player can enter shortcut via tilt
+        if (isPlayer)
+            EnterShortcutNow();
+    }
+
+    // Enter shortcut at the beginning (t = 0)
+    public void EnterShortcutNow()
+    {
+        if (isInShortcut) return;
+
+        isInShortcut = true;
+        shortcutT = 0f;
+        mainPosBeforeShortcut = currentPosition;
+
+        if (lapCounter != null)
+            lapCounter.lapCountingPaused = true;
+
+        GameManager.selected_track = 2; // for consistency/debug visibility
     }
 
     public void ResetPosition()
@@ -185,25 +274,15 @@ public class RacerAnimator : MonoBehaviour
         isJumping = false;
         jumpTimer = 0f;
         isInitialized = false;
-        
+
         if (lapCounter != null)
         {
             lapCounter.ResetLaps();
+            lapCounter.lapCountingPaused = false;
         }
 
-        float probabilityShortcut = UnityEngine.Random.value;
-        Debug.Log($"PROBABILITY: {probabilityShortcut}");
-        if (probabilityShortcut < GameData.probabilityOfOvercomingObstacles)
-        {
-            botTrack = 2;
-            Debug.Log($"FOLLOW SHORTCUT");
-        }
-        else
-        {
-            botTrack = 1;
-            Debug.Log($"FOLLOW NORMAL PATH");
-        }
-
+        isInShortcut = false;
+        shortcutT = 0f;
         InitializeRacer();
     }
 
@@ -229,6 +308,7 @@ public class RacerAnimator : MonoBehaviour
         if (lapCounter != null)
         {
             lapCounter.OnLapCompleted -= HandleLapCompleted;
+            lapCounter.OnShortcutEnterRequested -= HandleShortcutEnterRequested;
         }
     }
 

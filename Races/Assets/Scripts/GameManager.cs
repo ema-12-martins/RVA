@@ -85,11 +85,9 @@ public class GameManager : MonoBehaviour
     {
         if (racersSpawned) return; // Only spawn once
 
-        Vector3 spawnOffset = Vector3.up * 0.1f; // Small vertical offset if needed
-
         if (GameData.selectedCarPrefab != null)
         {
-            playerCarInstance = Instantiate(GameData.selectedCarPrefab, track.transform.position + spawnOffset, track.transform.rotation);
+            playerCarInstance = Instantiate(GameData.selectedCarPrefab, track.transform.position, track.transform.rotation);
             playerCarInstance.transform.SetParent(track.transform, true); // Parent to track
             playerRacer = playerCarInstance.GetComponent<RacerAnimator>();
             if (playerRacer != null)
@@ -97,7 +95,7 @@ public class GameManager : MonoBehaviour
                 playerRacer.track = track;
                 playerRacer.shortcut = shortcut;
                 playerRacer.isPlayer = true;
-                playerRacer.leftLane = true;
+                playerRacer.leftLane = false;
                 playerRacer.isPlayerControlled = true; // Still assumes player control logic exists
                 playerRacer.OnLapCompleted += HandlePlayerLap;
                 playerRacer.name = "PlayerCar";
@@ -109,7 +107,7 @@ public class GameManager : MonoBehaviour
 
         if (opponentCarPrefab != null)
         {
-            opponentCarInstance = Instantiate(opponentCarPrefab, track.transform.position + spawnOffset, track.transform.rotation);
+            opponentCarInstance = Instantiate(opponentCarPrefab, track.transform.position, track.transform.rotation);
              opponentCarInstance.transform.SetParent(track.transform, true); // Parent to track
             opponentRacer = opponentCarInstance.GetComponent<RacerAnimator>();
             if (opponentRacer != null)
@@ -117,11 +115,10 @@ public class GameManager : MonoBehaviour
                 opponentRacer.track = track;
                 opponentRacer.shortcut = shortcut;
                 opponentRacer.isPlayer = false;
-                opponentRacer.leftLane = false;
+                opponentRacer.leftLane = true;
                 opponentRacer.isPlayerControlled = false;
                 opponentRacer.OnLapCompleted += HandleOpponentLap;
                 opponentRacer.name = "OpponentCar";
-                opponentRacer.speed = 0.95f; // Example speed adjustment
                 opponentRacer.InitializeRacer();
                  opponentRacer.enabled = false; // Disable script initially
             }

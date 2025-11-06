@@ -1,5 +1,4 @@
-// LapCounter.cs - NEW FILE
-// Robust lap counting using checkpoint system
+// LapCounter.cs - Modified version for shortcut pausing & checkpoint sync
 using UnityEngine;
 using System;
 
@@ -8,7 +7,7 @@ public class LapCounter : MonoBehaviour
     [Header("Checkpoint Settings")]
     [Tooltip("Position thresholds on track (0-1) that must be crossed in order")]
     public float[] checkpoints = new float[] { 0.25f, 0.5f, 0.75f, 0.95f }; // Finish line at ~0/1
-    
+
     [Tooltip("How close racer must be to checkpoint to trigger it")]
     [Range(0.01f, 0.1f)]
     public float checkpointTolerance = 0.05f;
@@ -17,8 +16,17 @@ public class LapCounter : MonoBehaviour
     private bool[] checkpointsPassed;
     private int totalLaps = 0;
     private float lastPosition = 0f;
-    private bool isInitialized = false;    
+    private bool isInitialized = false;
+
     public event Action OnLapCompleted;
+
+    // NEW: request entering the shortcut (RacerAnimator listens)
+    public event Action OnShortcutEnterRequested;
+
+    // NEW: while on shortcut we pause lap counting logic entirely
+    [NonSerialized] public bool lapCountingPaused = false;
+
+    private bool wasInShortcutZone = false;
 
     void Awake()
     {
@@ -33,13 +41,12 @@ public class LapCounter : MonoBehaviour
     void Initialize()
     {
         if (isInitialized) return;
-        
+
         if (checkpoints == null || checkpoints.Length == 0)
         {
-            // Set default checkpoints if none are defined
             checkpoints = new float[] { 0.25f, 0.5f, 0.75f, 0.95f };
         }
-        
+
         checkpointsPassed = new bool[checkpoints.Length];
         ResetCheckpoints();
         isInitialized = true;
@@ -47,58 +54,68 @@ public class LapCounter : MonoBehaviour
 
     public void UpdatePosition(float normalizedPosition)
     {
+        if (!isInitialized) Initialize();
+        if (lapCountingPaused) return; // << NEW: ignore updates while on shortcut
+
         // Check if we crossed the finish line (wrap around from high to low)
         bool crossedFinishLine = lastPosition > 0.9f && normalizedPosition < 0.1f;
-        
+
         if (crossedFinishLine)
         {
             // Only count lap if all checkpoints were passed
             if (AllCheckpointsPassed())
             {
                 totalLaps++;
-                Debug.Log($"{gameObject.name} completed lap {totalLaps} at position {normalizedPosition:F3}");
                 OnLapCompleted?.Invoke();
                 ResetCheckpoints();
             }
             else
             {
-                Debug.LogWarning($"{gameObject.name} crossed finish line but missed checkpoints! " +
-                                $"Passed: {GetCheckpointStatus()}");
                 ResetCheckpoints(); // Reset anyway to prevent getting stuck
             }
         }
-        
+
         // Check current checkpoint
         if (currentCheckpointIndex < checkpoints.Length)
         {
             float targetCheckpoint = checkpoints[currentCheckpointIndex];
-            
-            // Check if we're within tolerance of the checkpoint
+
             if (Mathf.Abs(normalizedPosition - targetCheckpoint) <= checkpointTolerance)
             {
                 if (!checkpointsPassed[currentCheckpointIndex])
                 {
                     checkpointsPassed[currentCheckpointIndex] = true;
-                    Debug.Log($"{gameObject.name} passed checkpoint {currentCheckpointIndex + 1}/{checkpoints.Length} " +
-                             $"at position {normalizedPosition:F3}");
                     currentCheckpointIndex++;
                 }
             }
 
-            //Verify use the shortcut
-            if (normalizedPosition >= 0.35f && normalizedPosition <= 0.40f)
+            // --- Shortcut decision area ---
+            bool inShortcutZone = normalizedPosition >= 0.35f && normalizedPosition <= 0.4f;
+
+            if (inShortcutZone && !wasInShortcutZone)
+            {
+                Debug.Log($"[{name}] ENTERED shortcut zone at normalizedPosition={normalizedPosition:F3}");
+            }
+            else if (!inShortcutZone && wasInShortcutZone)
+            {
+                Debug.Log($"[{name}] EXITED shortcut zone at normalizedPosition={normalizedPosition:F3}");
+            }
+
+            wasInShortcutZone = inShortcutZone;
+
+            // Request enter shortcut on tilt
+            if (inShortcutZone)
             {
                 float tilt = Input.acceleration.x;
-                float tiltThreshold = 0.3f;
-
+                const float tiltThreshold = 0.3f;
                 if (Mathf.Abs(tilt) > tiltThreshold)
                 {
-                    Debug.Log("O jogador rodou o telemóvel na zona especial!");
-                    GameManager.selected_track = (GameManager.selected_track == 1 ? 2 : 1);
+                    Debug.Log($"[{name}] Requested ENTER SHORTCUT (tilt={tilt:F2}, normPos={normalizedPosition:F3})");
+                    OnShortcutEnterRequested?.Invoke();
                 }
             }
         }
-        
+
         lastPosition = normalizedPosition;
     }
 
@@ -115,17 +132,17 @@ public class LapCounter : MonoBehaviour
     {
         if (checkpointsPassed == null || checkpointsPassed.Length == 0)
         {
-            Initialize(); // Ensure initialization
-            if (checkpointsPassed == null) return; // Safety check
+            Initialize();
+            if (checkpointsPassed == null) return;
         }
-        
+
         for (int i = 0; i < checkpointsPassed.Length; i++)
         {
             checkpointsPassed[i] = false;
         }
         currentCheckpointIndex = 0;
 
-        //To follow by default the big route
+        // Default behavior: start each lap following main route
         GameManager.selected_track = 1;
     }
 
@@ -146,22 +163,48 @@ public class LapCounter : MonoBehaviour
 
     public void ResetLaps()
     {
-        Initialize(); // Ensure initialization before reset
+        Initialize();
         totalLaps = 0;
         ResetCheckpoints();
         lastPosition = 0f;
+    }
+
+    // NEW: mark checkpoints crossed between two normalized positions (handles wrap)
+    public void SyncCheckpointsBetween(float fromPos, float toPos)
+    {
+        if (checkpoints == null || checkpoints.Length == 0) return;
+
+        bool wrapped = toPos < fromPos;
+
+        Func<float, bool> isBetween = cp =>
+        {
+            if (!wrapped)
+                return cp >= fromPos && cp <= toPos;
+            else
+                return (cp >= fromPos && cp <= 1f) || (cp >= 0f && cp <= toPos);
+        };
+
+        for (int i = 0; i < checkpoints.Length; i++)
+        {
+            if (!checkpointsPassed[i] && isBetween(checkpoints[i]))
+            {
+                checkpointsPassed[i] = true;
+                currentCheckpointIndex = Mathf.Max(currentCheckpointIndex, i + 1);
+            }
+        }
+
+        // Align lastPosition to prevent false wrap detection
+        lastPosition = toPos;
     }
 
     // Optional: Visualize checkpoints in editor
     void OnDrawGizmos()
     {
         if (checkpoints == null || checkpoints.Length == 0) return;
-        
-        // Try to find track generator
+
         TrackGenerator track = FindAnyObjectByType<TrackGenerator>();
         if (track == null) return;
 
-        // Draw checkpoint positions
         Gizmos.color = Color.yellow;
         foreach (float checkpoint in checkpoints)
         {
@@ -169,9 +212,15 @@ public class LapCounter : MonoBehaviour
             Gizmos.DrawWireSphere(pos + Vector3.up * 2f, 0.5f);
         }
 
-        // Draw finish line
         Gizmos.color = Color.green;
         Vector3 finishPos = track.GetTrackPosition(0f);
         Gizmos.DrawWireSphere(finishPos + Vector3.up * 2f, 0.7f);
+
+        // Shortcut zone visualization
+        Gizmos.color = new Color(0.1f, 0.8f, 1f, 0.8f);
+        Vector3 z1 = track.GetTrackPosition(0.15f);
+        Vector3 z2 = track.GetTrackPosition(0.2f);
+        Gizmos.DrawWireSphere(z1 + Vector3.up * 1.5f, 0.3f);
+        Gizmos.DrawWireSphere(z2 + Vector3.up * 1.5f, 0.3f);
     }
 }

@@ -43,9 +43,7 @@ public class CarSelection : MonoBehaviour
 
     private void OnTargetStatusChanged(ObserverBehaviour behaviour, TargetStatus status)
     {
-        bool isDetected = status.Status == Status.TRACKED ||
-                          status.Status == Status.EXTENDED_TRACKED ||
-                          status.Status == Status.LIMITED; // Consider LIMITED as potentially detectable for UI
+        bool isDetected = status.Status == Status.TRACKED;
 
         if (uiManager != null)
         {
