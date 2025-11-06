@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(LapCounter))] // Ensure LapCounter is always present
 public class RacerAnimator : MonoBehaviour
@@ -91,6 +92,11 @@ public class RacerAnimator : MonoBehaviour
             shortcutT = 0f;
 
             Debug.Log($"{this.name} initialized on track at position {startPosition:F3}");
+
+            if (isPlayerControlled)
+            {
+                InputSystem.EnableDevice(LinearAccelerationSensor.current);
+            }
         }
     }
 
@@ -228,10 +234,10 @@ public class RacerAnimator : MonoBehaviour
 
         if (isPlayerControlled && !isJumping)
         {
-            float accelY = Input.acceleration.y;
+            float accelY = LinearAccelerationSensor.current.acceleration.ReadValue().y;
             // Debug.Log("Acceleration Y: " + accelY);
 
-            if (accelY < -1.0f)
+            if (accelY > 0.5f)
             {
                 isJumping = true;
                 jumpTimer = 0f;
