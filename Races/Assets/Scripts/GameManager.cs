@@ -20,6 +20,12 @@ public class GameManager : MonoBehaviour
     [Header("Prefabs")]
     public GameObject opponentCarPrefab;
 
+    [Header("Placed Objects Reconstruction")]
+    [Tooltip("Array of prefabs that can be placed on the track (must match names from planning scene)")]
+    public GameObject[] placeableObjectPrefabs;
+    [Tooltip("Parent transform where reconstructed objects will be placed (leave null to auto-create)")]
+    public Transform placedObjectsParent;
+
     [Header("UI")]
     public TextMeshProUGUI countdownText; // Assign a TextMeshPro for countdown
     public GameObject targetLostPanel;   // Assign a panel for the target lost message
@@ -35,14 +41,13 @@ public class GameManager : MonoBehaviour
 
     private GameState currentState = GameState.WaitingForTrack;
     private bool racersSpawned = false;
+    private bool objectsReconstructed = false;
     private Coroutine countdownCoroutine;
 
     public static float selected_track = 1f; //1=normaltrack 2=shortcut
 
     public string winnerText = null;
     public string winnerMsg = "";
-
-
 
     void Start()
     {
@@ -73,12 +78,78 @@ public class GameManager : MonoBehaviour
             trackTargetHandler.OnTrackLost += HandleTrackLost;
         }
 
+        // --- Reconstruct Placed Objects ---
+        ReconstructPlacedObjects();
+
         // --- State Initialization ---
         ChangeState(GameState.WaitingForTrack);
 
         // --- Spawn Racers (but keep them inactive/non-moving initially) ---
         SpawnRacers();
         SetRacersActive(false); // Make sure they don't move yet
+    }
+
+    void ReconstructPlacedObjects()
+    {
+        if (objectsReconstructed)
+        {
+            Debug.LogWarning("Objects already reconstructed!");
+            return;
+        }
+
+        // Check if we have saved track data
+        if (GameData.BuiltTrack == null || GameData.BuiltTrack.objects == null || GameData.BuiltTrack.objects.Count == 0)
+        {
+            Debug.Log("No placed objects to reconstruct.");
+            objectsReconstructed = true;
+            return;
+        }
+
+        // Ensure we have a parent for placed objects
+        if (placedObjectsParent == null)
+        {
+            placedObjectsParent = track.transform.Find("PlacedObjects");
+            if (placedObjectsParent == null)
+            {
+                var go = new GameObject("PlacedObjects");
+                go.transform.SetParent(track.transform, false);
+                placedObjectsParent = go.transform;
+            }
+        }
+
+        // Reconstruct each object
+        int reconstructedCount = 0;
+        foreach (var objData in GameData.BuiltTrack.objects)
+        {
+            // Find matching prefab by name
+            GameObject prefab = System.Array.Find(placeableObjectPrefabs, p => p.name == objData.prefabName);
+            
+            if (prefab == null)
+            {
+                Debug.LogWarning($"Prefab '{objData.prefabName}' not found in placeableObjectPrefabs array. Skipping.");
+                continue;
+            }
+
+            // Calculate position from parametric data
+            Vector3 position = track.GetLanePosition(objData.t, objData.isLeftLane);
+
+            // Calculate rotation from track tangent + yaw offset
+            float dt = 0.001f;
+            Vector3 p0 = track.GetTrackPosition(objData.t);
+            Vector3 p1 = track.GetTrackPosition(objData.t + dt);
+            Vector3 forward = (p1 - p0).sqrMagnitude > 1e-8f ? (p1 - p0).normalized : Vector3.forward;
+            Quaternion laneRotation = Quaternion.LookRotation(forward, Vector3.up);
+            Quaternion finalRotation = laneRotation * Quaternion.Euler(0f, objData.yawOffset, 0f);
+
+            // Instantiate the object
+            GameObject reconstructedObj = Instantiate(prefab, position, finalRotation, placedObjectsParent);
+            reconstructedObj.name = objData.prefabName + "_Reconstructed";
+
+            reconstructedCount++;
+        }
+
+        Debug.Log($"Reconstructed {reconstructedCount} placed object(s) from GameData.");
+        objectsReconstructed = true;
     }
 
     void SpawnRacers()

@@ -9,21 +9,20 @@ public static class GameData
     public static string finalText = null; // If win or lost
     public static float probabilityOfOvercomingObstacles = 0;
 
-    // Track save payload
+    // Modified: Parametric placement data instead of world transforms
     [Serializable]
     public class PlacedObjectData
     {
-        public string objectName;
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 localScale;
+        public string prefabName;        // Name/identifier of the prefab
+        public float t;                  // Normalized position along track [0-1]
+        public bool isLeftLane;          // True = left lane, false = right lane
+        public float yawOffset;          // Rotation offset in degrees (typically 0 or 180)
     }
 
     [Serializable]
     public class TrackSaveData
-    {
-        public Vector3[] controlPoints;          // from TrackGenerator
-        public List<PlacedObjectData> objects;   // baked objects under PlacedObjects
+    {        
+        public List<PlacedObjectData> objects;   // Parametric placement data
     }
 
     public static TrackSaveData BuiltTrack = null;
