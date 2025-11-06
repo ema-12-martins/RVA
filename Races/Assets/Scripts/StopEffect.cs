@@ -1,10 +1,10 @@
 using UnityEngine;
+using System.Collections;
 
 [CreateAssetMenu(fileName = "StopEffect", menuName = "ScriptableObjects/ItemEffects/StopEffect")]
 public class StopEffect : ItemEffect
 {
-    public float stopDuration = 3f;
-
+    public float hideDuration = 1.5f;
     public override void ApplyEffect(GameObject target)
     {
         RacerAnimator racerAnimator = target.GetComponent<RacerAnimator>();
@@ -20,6 +20,14 @@ public class StopEffect : ItemEffect
         if (racerAnimator != null)
         {
             racerAnimator.SetSpeed(1f);
+            gameObject.SetActive(false);
+            racerAnimator.StartCoroutine(ShowObjectCoroutine());
         }
     }
+
+    IEnumerator ShowObjectCoroutine()
+    {
+        yield return new WaitForSeconds(hideDuration);
+        gameObject.SetActive(true);
+    }    
 }

@@ -3,6 +3,14 @@ using UnityEngine;
 public class ItemCollision : MonoBehaviour
 {
     public ItemEffect itemEffect;
+
+    void Start()
+    {
+        if (itemEffect is StopEffect)
+        {
+            itemEffect.gameObject = gameObject;
+        }
+    }
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("ItemCollision detected with: " + other.name);

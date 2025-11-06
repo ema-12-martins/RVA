@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: StopEffect
   m_EditorClassIdentifier: 
   itemName: Tire Pile
-  duration: 0
+  duration: 2
   dir: 0
   useDirection: 0
-  stopDuration: 3
