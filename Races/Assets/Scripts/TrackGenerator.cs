@@ -31,9 +31,36 @@ public class TrackGenerator : MonoBehaviour
     [Header("Generation")]
     public bool autoUpdate = true;
 
+    // === NEW: Start checker pattern ===
+    [Header("Start Checker Pattern")]
+    [Tooltip("Create a small checkered rectangle at the start of the track")]
+    public bool addStartChecker = true;
+
+    [Tooltip("Length of the checkered rectangle along the track (meters)")]
+    [Range(0.1f, 5f)] public float checkerLength = 0.6f;
+
+    [Tooltip("Number of squares across the track width")]
+    [Range(2, 32)] public int checkerCols = 8;
+
+    [Tooltip("Number of squares along the track length")]
+    [Range(1, 16)] public int checkerRows = 2;
+
+    [Tooltip("Vertical offset above the track to avoid z-fighting")]
+    [Range(0.0001f, 0.02f)] public float checkerYOffset = 0.01f;
+
+    [Tooltip("Optional: material for white tiles (URP Unlit recommended)")]
+    public Material checkerWhiteMaterial;
+
+    [Tooltip("Optional: material for black tiles (URP Unlit recommended)")]
+    public Material checkerBlackMaterial;
+
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
     private GameObject dividerObject;
+
+    // NEW: holder for the checker mesh
+    private GameObject startCheckerObject;
+
     private float cachedTrackLength = -1f;
 
     void OnValidate()
@@ -86,6 +113,12 @@ public class TrackGenerator : MonoBehaviour
             meshRenderer.sharedMaterial = trackMaterial;
 
         CreateDividerLine(curvePoints);
+
+        // NEW: build the start checker after the track so we know the width/tangent at t=0
+        if (addStartChecker)
+            CreateStartChecker(curvePoints);
+        else
+            DestroyExistingStartCheckerIfAny();
     }
 
     List<Vector3> GenerateCurvePoints()
@@ -410,6 +443,142 @@ public class TrackGenerator : MonoBehaviour
 
         if (dividerMaterial != null)
             dividerRenderer.sharedMaterial = dividerMaterial;
+    }
+
+    // === NEW: create a checkered rectangle at t=0 ===
+    void CreateStartChecker(List<Vector3> centerPoints)
+    {
+        if (centerPoints == null || centerPoints.Count < 2) return;
+
+        // Get start position and tangent
+        int i0 = 0;
+        Vector3 start = centerPoints[i0];
+
+        Vector3 prev = isClosed ? centerPoints[centerPoints.Count - 1] : centerPoints[Mathf.Max(0, i0)];
+        Vector3 next = centerPoints[Mathf.Min(i0 + 1, centerPoints.Count - 1)];
+        Vector3 forward = (next - prev).sqrMagnitude > 1e-8f ? (next - prev).normalized : Vector3.forward;
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+
+        float width = laneWidth * 2f;
+        float length = Mathf.Max(0.01f, checkerLength);
+
+        // Ensure/locate the holder
+        if (startCheckerObject == null)
+        {
+            Transform existing = transform.Find("Start Checker");
+            if (existing != null) startCheckerObject = existing.gameObject;
+            else
+            {
+                startCheckerObject = new GameObject("Start Checker");
+                startCheckerObject.transform.SetParent(transform);
+                startCheckerObject.transform.localPosition = Vector3.zero;
+                startCheckerObject.transform.localRotation = Quaternion.identity;
+                startCheckerObject.transform.localScale = Vector3.one;
+            }
+        }
+
+        var mf = startCheckerObject.GetComponent<MeshFilter>();
+        if (mf == null) mf = startCheckerObject.AddComponent<MeshFilter>();
+        var mr = startCheckerObject.GetComponent<MeshRenderer>();
+        if (mr == null) mr = startCheckerObject.AddComponent<MeshRenderer>();
+
+        // Build grid mesh with two submeshes (white/black)
+        Mesh m = new Mesh();
+        m.name = "Start Checker Mesh";
+        List<Vector3> verts = new();
+        List<Vector2> uvs = new();
+        List<int> trisWhite = new();
+        List<int> trisBlack = new();
+
+        float tileW = width / Mathf.Max(1, checkerCols);
+        float tileL = length / Mathf.Max(1, checkerRows);
+
+        // Center the rectangle at 'start' (half before, half after)
+        Vector3 origin = start + Vector3.up * checkerYOffset;
+
+        for (int r = 0; r < checkerRows; r++)
+        {
+            for (int c = 0; c < checkerCols; c++)
+            {
+                float u0 = -width * 0.5f + c * tileW;
+                float u1 = u0 + tileW;
+                float v0 = -length * 0.5f + r * tileL;
+                float v1 = v0 + tileL;
+
+                // 4 verts per tile (world-space, matching the rest of this generator)
+                Vector3 p00 = origin + right * u0 + forward * v0;
+                Vector3 p10 = origin + right * u1 + forward * v0;
+                Vector3 p11 = origin + right * u1 + forward * v1;
+                Vector3 p01 = origin + right * u0 + forward * v1;
+
+                int baseIndex = verts.Count;
+                verts.Add(p00); uvs.Add(new Vector2(0, 0));
+                verts.Add(p10); uvs.Add(new Vector2(1, 0));
+                verts.Add(p11); uvs.Add(new Vector2(1, 1));
+                verts.Add(p01); uvs.Add(new Vector2(0, 1));
+
+                // Two triangles (CCW so normals face up)
+                bool white = (r + c) % 2 == 0;
+                List<int> target = white ? trisWhite : trisBlack;
+
+                // CCW: (0,2,1) and (0,3,2)
+                target.Add(baseIndex + 0);
+                target.Add(baseIndex + 2);
+                target.Add(baseIndex + 1);
+
+                target.Add(baseIndex + 0);
+                target.Add(baseIndex + 3);
+                target.Add(baseIndex + 2);
+            }
+        }
+
+        m.subMeshCount = 2;
+        m.SetVertices(verts);
+        m.SetUVs(0, uvs);
+        m.SetTriangles(trisWhite, 0);
+        m.SetTriangles(trisBlack, 1);
+        m.RecalculateNormals();
+        m.RecalculateBounds();
+        mf.sharedMesh = m;
+
+        // Materials (fallback to simple URP Unlit black/white if none provided)
+        Material w = checkerWhiteMaterial;
+        Material b = checkerBlackMaterial;
+
+        if (w == null || b == null)
+        {
+            Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
+            if (sh == null) sh = Shader.Find("Unlit/Color"); // fallback for non-URP
+            if (w == null)
+            {
+                w = new Material(sh);
+                if (w.HasProperty("_BaseColor")) w.SetColor("_BaseColor", Color.white);
+                else if (w.HasProperty("_Color")) w.SetColor("_Color", Color.white);
+            }
+            if (b == null)
+            {
+                b = new Material(sh);
+                if (b.HasProperty("_BaseColor")) b.SetColor("_BaseColor", Color.black);
+                else if (b.HasProperty("_Color")) b.SetColor("_Color", Color.black);
+            }
+        }
+
+        mr.sharedMaterials = new Material[] { w, b };
+    }
+
+    void DestroyExistingStartCheckerIfAny()
+    {
+        Transform existing = transform.Find("Start Checker");
+        if (existing != null)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying) DestroyImmediate(existing.gameObject);
+            else Destroy(existing.gameObject);
+#else
+            Destroy(existing.gameObject);
+#endif
+        }
+        startCheckerObject = null;
     }
 
     // Gets a point on the track at normalized position t (0 to 1)
