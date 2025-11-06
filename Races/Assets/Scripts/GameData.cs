@@ -4,6 +4,10 @@ using UnityEngine;
 
 public static class GameData
 {
+
+    //Handling Bot jump
+    public static bool isJumpingForBot = false;
+
     public static GameObject selectedCarPrefab = null;
     public static string finalText = null; // If win or lost
     public static float probabilityOfOvercomingObstacles = 0;

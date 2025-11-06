@@ -1,8 +1,17 @@
 using UnityEngine;
+using UnityEngine.Animations;
 
 public class ItemCollision : MonoBehaviour
 {
     public ItemEffect itemEffect;
+
+    void Start()
+    {
+        if (itemEffect is StopEffect)
+        {
+            itemEffect.gameObject = gameObject;
+        }
+    }
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("ItemCollision detected with: " + other.name);
@@ -12,7 +21,7 @@ public class ItemCollision : MonoBehaviour
             if (itemEffect.useDirection)
             {
                 Vector3 carForward = other.transform.forward;
-                Vector3 itemForward = transform.forward;
+                Vector3 itemForward = transform.parent.forward;
 
                 Debug.Log("Car Forward: " + carForward);
                 Debug.Log("Item Forward: " + itemForward);

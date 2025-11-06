@@ -5,6 +5,8 @@ public abstract class ItemEffect : ScriptableObject
     public string itemName;
     public float duration;
 
+    public GameObject gameObject;
+
     public int dir = 0;
 
     public bool useDirection = false;

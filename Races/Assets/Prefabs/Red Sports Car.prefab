@@ -73,8 +73,8 @@ MonoBehaviour:
   speed: 1
   startPosition: 0
   isPlayerControlled: 0
-  jumpHeight: 1
-  jumpDuration: 0.5
+  jumpHeight: 2
+  jumpDuration: 0.7
   activeEffects: []
 --- !u!136 &9153844985676142288
 CapsuleCollider:
@@ -95,10 +95,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.25
-  m_Height: 1.2
+  m_Radius: 0.11
+  m_Height: 0.6
   m_Direction: 2
-  m_Center: {x: 0, y: 0.13, z: 0}
+  m_Center: {x: 0, y: 0.05, z: 0}
 --- !u!54 &2093860664913004102
 Rigidbody:
   m_ObjectHideFlags: 0
