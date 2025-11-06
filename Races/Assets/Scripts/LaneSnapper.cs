@@ -31,6 +31,14 @@ public class LaneSnapper : MonoBehaviour
     [Tooltip("Rotate the card; we read its yaw and snap to 0/180")]
     [SerializeField] bool quantizeRotation180 = true;
 
+    [Header("Placement Limits")]
+    [Tooltip("Maximum number of objects allowed. 0 = no limit")]
+    [SerializeField] int maxPlacements = 10;
+    [Tooltip("If objects lack Renderers, fall back to this min world-space separation (meters)")]
+    [SerializeField, Range(0f, 2f)] float minSeparationDistance = 0.30f;
+    [Tooltip("Extra world-space padding when checking Renderer bounds overlap (meters)")]
+    [SerializeField, Range(0f, 0.2f)] float boundsPadding = 0.01f;
+
     [Header("UI")]
     [SerializeField] Canvas worldCanvas;
     [SerializeField] TMP_Text feedbackText;
@@ -63,6 +71,7 @@ public class LaneSnapper : MonoBehaviour
             UpdateOnTargetVisual(true);
             UpdatePreviewVisual(false);
             SetFeedback("Point your camera to the marker.");
+            SetConfirmVisible(false);
             return;
         }
 
@@ -97,6 +106,7 @@ public class LaneSnapper : MonoBehaviour
 
             if (previewVisual)
             {
+                // Move/rotate preview into candidate pose (so our overlap check uses real bounds)
                 previewVisual.position = Vector3.Lerp(previewVisual.position, targetLanePos, followTightness);
                 previewVisual.rotation = laneRot * Quaternion.Euler(0f, currentYawStepDeg, 0f);
             }
@@ -104,8 +114,28 @@ public class LaneSnapper : MonoBehaviour
             UpdateOnTargetVisual(false);
             UpdatePreviewVisual(true);
             SetLaneBadge(lane);
-            SetFeedback($"You can rotate by 180°\nTo confirm tap 'Place'");
-            SetConfirmVisible(true);
+
+            // --- NEW: gate placement by limit + overlap
+            var parent = GetPlacedParentMaybe();
+            int placedCount = CountPlaced(parent);
+            bool limitReached = maxPlacements > 0 && placedCount >= maxPlacements;
+            bool overlaps = previewVisual ? WouldOverlap(previewVisual, parent) : false;
+
+            if (limitReached)
+            {
+                SetFeedback($"Limit reached ({placedCount}/{maxPlacements}). Remove one to place more.");
+                SetConfirmVisible(false);
+            }
+            else if (overlaps)
+            {
+                SetFeedback("Can't place here: overlaps another object. Move along the lane.");
+                SetConfirmVisible(false);
+            }
+            else
+            {
+                SetFeedback("You can rotate by 180°\nThen tap 'Place'");
+                SetConfirmVisible(true);
+            }
         }
         else
         {
@@ -152,6 +182,21 @@ public class LaneSnapper : MonoBehaviour
 
         Transform parent = placedObjectsParent != null ? placedObjectsParent : EnsurePlacedParent();
 
+        // --- NEW: enforce cap right before committing
+        int placedCount = CountPlaced(parent);
+        if (maxPlacements > 0 && placedCount >= maxPlacements)
+        {
+            SetFeedback($"Limit reached ({placedCount}/{maxPlacements}).");
+            return;
+        }
+
+        // --- NEW: block overlapping commit
+        if (WouldOverlap(previewVisual, parent))
+        {
+            SetFeedback("Can't place here: overlaps another object. Move along the lane.");
+            return;
+        }
+
         var baked = Instantiate(previewVisual.gameObject, parent);
         baked.transform.SetPositionAndRotation(previewVisual.position, previewVisual.rotation);
         
@@ -169,8 +214,15 @@ public class LaneSnapper : MonoBehaviour
         UpdatePreviewVisual(false);
         SetLaneBadgeVisible(false);
         SetConfirmVisible(false);
-        SetFeedback("Placed! You can move the card to add more.");
+
+        placedCount++;
+        if (maxPlacements > 0)
+            SetFeedback($"Placed! ({placedCount}/{maxPlacements})");
+        else
+            SetFeedback("Placed! You can move the card to add more.");
     }
+
+    // ---------- Helpers: limits & overlap ----------
 
     Transform EnsurePlacedParent()
     {
@@ -181,10 +233,84 @@ public class LaneSnapper : MonoBehaviour
         return go.transform;
     }
 
-    void SetLocked(bool val)
+    Transform GetPlacedParentMaybe()
     {
-        isLocked = val;
+        // Do NOT create until first placement; we only need it for counting/overlap checks.
+        var t = placedObjectsParent ? placedObjectsParent : track.transform.Find("PlacedObjects");
+        return t;
     }
+
+    int CountPlaced(Transform parent)
+    {
+        if (parent == null) return 0;
+        int c = 0;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            if (parent.GetChild(i).GetComponent<PlacedObjectMetadata>() != null) c++;
+        }
+        return c;
+    }
+
+    bool WouldOverlap(Transform candidate, Transform parent)
+    {
+        if (parent == null) return false;
+
+        // Try precise (Renderer bounds) first
+        if (TryGetWorldBounds(candidate, out Bounds candBounds))
+        {
+            // Inflate slightly to be conservative (positive expands)
+            candBounds.Expand(boundsPadding);
+
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                var other = parent.GetChild(i);
+                if (other == candidate) continue;
+                if (!other.gameObject.activeInHierarchy) continue;
+
+                if (TryGetWorldBounds(other, out Bounds otherBounds))
+                {
+                    otherBounds.Expand(boundsPadding);
+                    if (candBounds.Intersects(otherBounds))
+                        return true;
+                }
+                else
+                {
+                    // Fallback to distance if the other has no renderers
+                    if (Vector3.Distance(candidate.position, other.position) < minSeparationDistance)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        // Fallback: no renderers on candidate — use distance check
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            var other = parent.GetChild(i);
+            if (!other.gameObject.activeInHierarchy) continue;
+            if (Vector3.Distance(candidate.position, other.position) < minSeparationDistance)
+                return true;
+        }
+        return false;
+    }
+
+    bool TryGetWorldBounds(Transform root, out Bounds bounds)
+    {
+        var renderers = root.GetComponentsInChildren<Renderer>();
+        if (renderers != null && renderers.Length > 0)
+        {
+            bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+                bounds.Encapsulate(renderers[i].bounds);
+            return true;
+        }
+        bounds = default;
+        return false;
+    }
+
+    // ---------- Existing helpers & UI ----------
+
+    void SetLocked(bool val) => isLocked = val;
 
     bool IsTracked(TargetStatus status)
     {
