@@ -73,8 +73,8 @@ MonoBehaviour:
   speed: 1
   startPosition: 0
   isPlayerControlled: 0
-  jumpHeight: 1
-  jumpDuration: 0.5
+  jumpHeight: 2
+  jumpDuration: 0.7
   activeEffects: []
 --- !u!136 &573299854031723390
 CapsuleCollider:
